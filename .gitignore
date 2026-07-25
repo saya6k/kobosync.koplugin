@@ -1,0 +1,14 @@
+# AI / agent meta files
+SPEC.md
+tasks/
+.agents/
+.claude/
+CLAUDE.md
+MEMORY.md
+AGENTS.md
+
+# Build artifacts
+dist/
+
+# OS
+.DS_Store
