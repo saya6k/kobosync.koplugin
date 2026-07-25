@@ -19,9 +19,15 @@ local socketutil = require("socketutil")
 local _ = require("gettext")
 local T = require("ffi/util").template
 
+local Event = require("ui/event")
+
 local KoboApi = require("koboapi")
+local ReadingState = require("readingstate")
 local StateStore = require("statestore")
 local SyncEngine = require("syncengine")
+
+-- Ask before bulk downloads (first sync, or mass changes later).
+local BULK_CONFIRM_THRESHOLD = 10
 
 local KoboSync = WidgetContainer:extend{
     name = "kobosync",
@@ -61,6 +67,7 @@ function KoboSync:init()
     self.download_dir = self.settings:readSetting("download_dir")
         or DataStorage:getDataDir() .. "/kobosync"
     self.download_mode = self.settings:readSetting("download_mode") or "auto"
+    self.upload_on_close = self.settings:nilOrTrue("upload_on_close")
     self:onDispatcherRegisterActions()
     self.ui.menu:registerToMainMenu(self)
 end
@@ -78,6 +85,7 @@ function KoboSync:saveSettings()
     self.settings:saveSetting("server_url", self.server_url)
     self.settings:saveSetting("download_dir", self.download_dir)
     self.settings:saveSetting("download_mode", self.download_mode)
+    self.settings:saveSetting("upload_on_close", self.upload_on_close)
     self.settings:flush()
 end
 
@@ -133,6 +141,14 @@ function KoboSync:addToMainMenu(menu_items)
                     }:chooseDir(self.download_dir)
                 end,
             },
+            {
+                text = _("Upload reading progress when closing a book"),
+                checked_func = function() return self.upload_on_close end,
+                callback = function()
+                    self.upload_on_close = not self.upload_on_close
+                    self:saveSettings()
+                end,
+            },
         },
     }
 end
@@ -183,6 +199,7 @@ function KoboSync:doSync()
 
     local state = self:getState()
     local api = self:getApi()
+    local first_sync = state:get_synctoken() == nil
     local result = SyncEngine.new_result()
     local token, err, partial_token = api:sync(state:get_synctoken(), function(items)
         SyncEngine.process_items(state, items, result)
@@ -198,25 +215,55 @@ function KoboSync:doSync()
         return
     end
 
-    local downloaded, failed = self:downloadPlanned(state, api)
+    local pushed, pulled = self:applyReadingStates(state, api)
     state:save()
 
-    self:confirmDeletions(state, result.delete_candidates, function()
-        local lines = {
-            T(_("Kobo Sync finished.\nNew: %1  Changed: %2"), result.new, result.changed),
-        }
-        if downloaded > 0 then
-            table.insert(lines, T(_("Downloaded: %1"), downloaded))
+    local plan = SyncEngine.plan_downloads(state, self.download_mode)
+    self:maybeConfirmDownloads(plan, first_sync, function(confirmed)
+        local downloaded, failed = 0, 0
+        if confirmed then
+            downloaded, failed = self:downloadPlanned(state, api, plan)
+            state:save()
         end
-        if failed > 0 then
-            table.insert(lines, T(_("Failed downloads: %1"), failed))
-        end
-        UIManager:show(InfoMessage:new{ text = table.concat(lines, "\n") })
+        self:confirmDeletions(state, result.delete_candidates, function()
+            local lines = {
+                T(_("Kobo Sync finished.\nNew: %1  Changed: %2"), result.new, result.changed),
+            }
+            if downloaded > 0 then
+                table.insert(lines, T(_("Downloaded: %1"), downloaded))
+            end
+            if failed > 0 then
+                table.insert(lines, T(_("Failed downloads: %1"), failed))
+            end
+            if pushed > 0 or pulled > 0 then
+                table.insert(lines, T(_("Reading progress: %1 sent, %2 received"), pushed, pulled))
+            end
+            UIManager:show(InfoMessage:new{ text = table.concat(lines, "\n") })
+        end)
     end)
 end
 
-function KoboSync:downloadPlanned(state, api)
-    local plan = SyncEngine.plan_downloads(state, self.download_mode)
+-- Bulk downloads are opt-in: ask on the first sync and for mass changes.
+-- calls_back(confirmed) with the user's choice.
+function KoboSync:maybeConfirmDownloads(plan, first_sync, callback)
+    if #plan == 0 then
+        callback(false)
+        return
+    end
+    if not first_sync and #plan <= BULK_CONFIRM_THRESHOLD then
+        callback(true)
+        return
+    end
+    UIManager:show(ConfirmBox:new{
+        text = T(_("Kobo Sync: download %1 book(s) to this device now?"), #plan),
+        ok_text = _("Download"),
+        ok_callback = function() callback(true) end,
+        cancel_text = _("Not now"),
+        cancel_callback = function() callback(false) end,
+    })
+end
+
+function KoboSync:downloadPlanned(state, api, plan)
     if #plan == 0 then return 0, 0 end
     if lfs.attributes(self.download_dir, "mode") ~= "directory" then
         lfs.mkdir(self.download_dir)
@@ -271,7 +318,145 @@ function KoboSync:downloadBook(state, api, item)
         downloaded_revision = item.revision_id,
         downloaded_size = item.size,
     })
+    -- Seed KOReader's sidecar with the server's reading state, if any.
+    if book.server_state then
+        self:applyServerState(path, book.server_state)
+        state:upsert_book(item.uuid, { applied_state_time = book.server_state.LastModified })
+    end
     return true
+end
+
+-- Reads the KOReader sidecar for a closed book; nil when never opened.
+function KoboSync:readLocalState(path)
+    local sidecar = DocSettings:findSidecarFile(path)
+    if not sidecar then return nil end
+    local doc_settings = DocSettings:open(path)
+    local summary = doc_settings:readSetting("summary") or {}
+    return {
+        percent = doc_settings:readSetting("percent_finished") or 0,
+        status = summary.status,
+        modified_time = lfs.attributes(sidecar, "modification"),
+    }
+end
+
+-- Writes server progress into a closed book's sidecar. The reading position
+-- itself cannot be restored from a percentage; ReaderReady offers the jump.
+function KoboSync:applyServerState(path, server_state)
+    local st = ReadingState.from_kobo(server_state)
+    if not st then return end
+    local doc_settings = DocSettings:open(path)
+    doc_settings:saveSetting("percent_finished", st.percent)
+    if st.status then
+        local summary = doc_settings:readSetting("summary") or {}
+        summary.status = st.status
+        summary.modified = os.date("%Y-%m-%d", st.modified_time or os.time())
+        doc_settings:saveSetting("summary", summary)
+    end
+    doc_settings:flush()
+end
+
+function KoboSync:uuidForPath(state, path)
+    for _idx, book in ipairs(state:list_books()) do
+        if book.local_path == path then return book.uuid end
+    end
+    return nil
+end
+
+-- Uploads every queued reading state; failures stay queued for next time.
+function KoboSync:flushPendingStates(state, api)
+    local pushed = 0
+    for uuid, payload in pairs(state:pending_states()) do
+        -- Skip the push when the server moved past our queued snapshot.
+        local book = state:get_book(uuid)
+        local server_state = book and book.server_state
+        local queued_time = ReadingState.iso_to_epoch(payload.LastModified)
+        if server_state and ReadingState.resolve(
+                { modified_time = queued_time }, server_state) == "pull" then
+            state:clear_pending_state(uuid)
+        else
+            local ok = api:put_state(uuid, payload)
+            if ok then
+                state:clear_pending_state(uuid)
+                state:upsert_book(uuid, {
+                    server_state = payload,
+                    applied_state_time = payload.LastModified,
+                })
+                pushed = pushed + 1
+            end
+        end
+    end
+    return pushed
+end
+
+-- Two-way reading state sync: push the queue, then pull server-newer states
+-- into local sidecars (skipping the currently open document).
+function KoboSync:applyReadingStates(state, api)
+    local pushed = self:flushPendingStates(state, api)
+    local pulled = 0
+    local open_file = self.ui and self.ui.document and self.ui.document.file
+    for _idx, book in ipairs(state:list_books()) do
+        if book.downloaded and book.local_path and book.server_state
+                and book.local_path ~= open_file
+                and book.server_state.LastModified ~= book.applied_state_time then
+            local local_state = self:readLocalState(book.local_path)
+            if ReadingState.resolve(local_state, book.server_state) == "pull" then
+                self:applyServerState(book.local_path, book.server_state)
+                pulled = pulled + 1
+            end
+            state:upsert_book(book.uuid, {
+                applied_state_time = book.server_state.LastModified,
+            })
+        end
+    end
+    return pushed, pulled
+end
+
+-- Queue (and best-effort upload) the reading state whenever a book from the
+-- catalog is closed.
+function KoboSync:onCloseDocument()
+    if not self.upload_on_close or not self.server_url then return end
+    local file = self.ui.document and self.ui.document.file
+    if not file then return end
+    local state = self:getState()
+    local uuid = self:uuidForPath(state, file)
+    if not uuid then return end
+    local summary = self.ui.doc_settings:readSetting("summary") or {}
+    local payload = ReadingState.to_kobo(uuid, {
+        percent = self.ui.doc_settings:readSetting("percent_finished") or 0,
+        status = summary.status,
+        modified_time = os.time(),
+    }, (state:get_book(uuid) or {}).server_state)
+    state:set_pending_state(uuid, payload)
+    if NetworkMgr:isOnline() then
+        self:flushPendingStates(state, self:getApi())
+    end
+    state:save()
+end
+
+-- When opening a book whose server progress is ahead, offer to jump there.
+function KoboSync:onReaderReady()
+    if not self.server_url then return end
+    local file = self.ui.document and self.ui.document.file
+    if not file then return end
+    local state = self:getState()
+    local uuid = self:uuidForPath(state, file)
+    local book = uuid and state:get_book(uuid)
+    if not book or not book.server_state then return end
+    local local_state = self:readLocalState(file)
+    if ReadingState.resolve(local_state, book.server_state) ~= "pull" then return end
+    local st = ReadingState.from_kobo(book.server_state)
+    if not st or (st.percent or 0) <= 0 then return end
+    local percent = math.floor(st.percent * 1000 + 0.5) / 10
+    UIManager:show(ConfirmBox:new{
+        text = T(_("Kobo Sync: the server has newer reading progress (%1%). Jump there?"), percent),
+        ok_text = _("Jump"),
+        ok_callback = function()
+            self.ui:handleEvent(Event:new("GotoPercent", percent))
+            state:upsert_book(uuid, { applied_state_time = book.server_state.LastModified })
+            state:save()
+        end,
+        cancel_text = _("Stay"),
+    })
 end
 
 -- Asks the user before deleting local files of server-removed books, then
