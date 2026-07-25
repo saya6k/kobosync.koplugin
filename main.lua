@@ -7,6 +7,7 @@ local InfoMessage = require("ui/widget/infomessage")
 local InputDialog = require("ui/widget/inputdialog")
 local LuaSettings = require("luasettings")
 local NetworkMgr = require("ui/network/manager")
+local Trapper = require("ui/trapper")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local http = require("socket.http")
@@ -118,6 +119,14 @@ function KoboSync:addToMainMenu(menu_items)
                 callback = function() self:onKoboSyncSync() end,
             },
             {
+                text = _("Browse server library"),
+                enabled_func = function() return self.server_url ~= nil end,
+                callback = function()
+                    local Browser = require("browser")
+                    Browser.show(self)
+                end,
+            },
+            {
                 text_func = function()
                     return self.server_url
                         and T(_("Server: %1"), self.server_url)
@@ -142,11 +151,40 @@ function KoboSync:addToMainMenu(menu_items)
                 end,
             },
             {
+                text = _("Download new books automatically"),
+                help_text = _("When disabled, syncing only updates the catalog; "
+                    .. "download books individually from the server library browser."),
+                checked_func = function() return self.download_mode == "auto" end,
+                callback = function()
+                    self.download_mode = self.download_mode == "auto" and "on_demand" or "auto"
+                    self:saveSettings()
+                end,
+            },
+            {
                 text = _("Upload reading progress when closing a book"),
                 checked_func = function() return self.upload_on_close end,
                 callback = function()
                     self.upload_on_close = not self.upload_on_close
                     self:saveSettings()
+                end,
+                separator = true,
+            },
+            {
+                text = _("Reset sync"),
+                keep_menu_open = true,
+                callback = function()
+                    UIManager:show(ConfirmBox:new{
+                        text = _("Kobo Sync: forget the sync state and catalog?\n"
+                            .. "Downloaded files are kept. The next synchronization "
+                            .. "will be a full one."),
+                        ok_text = _("Reset"),
+                        ok_callback = function()
+                            local state = self:getState()
+                            state:reset()
+                            state:save()
+                            UIManager:show(InfoMessage:new{ text = _("Kobo Sync: state reset.") })
+                        end,
+                    })
                 end,
             },
         },
@@ -188,14 +226,14 @@ function KoboSync:onKoboSyncSync()
         UIManager:show(InfoMessage:new{ text = _("Kobo Sync: set the server URL first.") })
         return true
     end
-    NetworkMgr:runWhenOnline(function() self:doSync() end)
+    NetworkMgr:runWhenOnline(function()
+        Trapper:wrap(function() self:doSync() end)
+    end)
     return true
 end
 
 function KoboSync:doSync()
-    local info = InfoMessage:new{ text = _("Kobo Sync: synchronizing…") }
-    UIManager:show(info)
-    UIManager:forceRePaint()
+    Trapper:info(_("Kobo Sync: synchronizing…"))
 
     local state = self:getState()
     local api = self:getApi()
@@ -207,16 +245,18 @@ function KoboSync:doSync()
     -- Keep progress from already processed pages even on a failed run.
     state:set_synctoken(token or partial_token or state:get_synctoken())
     state:save()
-    UIManager:close(info)
     if not token then
+        Trapper:clear()
         UIManager:show(InfoMessage:new{
             text = T(_("Kobo Sync failed: %1"), err or _("unknown error")),
         })
         return
     end
 
+    Trapper:info(_("Kobo Sync: syncing reading progress…"))
     local pushed, pulled = self:applyReadingStates(state, api)
     state:save()
+    Trapper:clear()
 
     local plan = SyncEngine.plan_downloads(state, self.download_mode)
     self:maybeConfirmDownloads(plan, first_sync, function(confirmed)
@@ -257,7 +297,10 @@ function KoboSync:maybeConfirmDownloads(plan, first_sync, callback)
     UIManager:show(ConfirmBox:new{
         text = T(_("Kobo Sync: download %1 book(s) to this device now?"), #plan),
         ok_text = _("Download"),
-        ok_callback = function() callback(true) end,
+        -- Re-wrap: the dialog callback runs outside the sync coroutine.
+        ok_callback = function()
+            Trapper:wrap(function() callback(true) end)
+        end,
         cancel_text = _("Not now"),
         cancel_callback = function() callback(false) end,
     })
@@ -270,13 +313,10 @@ function KoboSync:downloadPlanned(state, api, plan)
     end
     local downloaded, failed = 0, 0
     for i, item in ipairs(plan) do
-        local info = InfoMessage:new{
-            text = T(_("Kobo Sync: downloading %1 of %2\n%3"), i, #plan, item.title or ""),
-        }
-        UIManager:show(info)
-        UIManager:forceRePaint()
+        local go_on = Trapper:info(T(_("Kobo Sync: downloading %1 of %2\n%3\n\nTap to cancel."),
+            i, #plan, item.title or ""))
+        if not go_on then break end
         local ok, dl_err = self:downloadBook(state, api, item)
-        UIManager:close(info)
         if ok then
             downloaded = downloaded + 1
         else
@@ -284,6 +324,7 @@ function KoboSync:downloadPlanned(state, api, plan)
             logger.warn("KoboSync: download failed:", item.uuid, dl_err)
         end
     end
+    Trapper:clear()
     return downloaded, failed
 end
 
@@ -293,10 +334,16 @@ function KoboSync:downloadBook(state, api, item)
     local base = SyncEngine.sanitize_filename(book.title, book.author)
     local ext = SyncEngine.extension_for(item.format)
     local filename = SyncEngine.unique_filename(base, ext, item.uuid, function(name)
-        -- Taken if the file exists but is not this book's own file.
+        -- Taken only when a different catalog book owns that file; an
+        -- unowned leftover (e.g. after "Reset sync") is safely overwritten.
         local path = self.download_dir .. "/" .. name
         if not lfs.attributes(path, "mode") then return false end
-        return book.local_path ~= path
+        for _idx, other in ipairs(state:list_books()) do
+            if other.local_path == path then
+                return other.uuid ~= item.uuid
+            end
+        end
+        return false
     end)
     local path = self.download_dir .. "/" .. filename
     local tmp_path = path .. ".kobosync.tmp"
