@@ -13,9 +13,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: leafo/gh-actions-lua@v10
         with:
-          # luajit-2.1 tarballs are no longer downloadable from luajit.org;
-          # openresty's LuaJIT fork is fetched from git and stays available.
-          luaVersion: "luajit-openresty"
+          # PUC Lua 5.1, not LuaJIT: luarocks.org's manifest has grown past
+          # LuaJIT's 65536-constants-per-function load limit, and the luajit
+          # tarballs 404 from luajit.org anyway. The plugin targets Lua 5.1
+          # either way.
+          luaVersion: "5.1"
       - uses: leafo/gh-actions-luarocks@v4
       - name: Install tools
         run: |
