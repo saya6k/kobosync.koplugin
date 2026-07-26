@@ -216,3 +216,110 @@ describe("SyncEngine.plan_downloads", function()
         assert.are.equal(0, #SyncEngine.plan_downloads(store, "auto"))
     end)
 end)
+
+describe("SyncEngine.short_title", function()
+    it("drops a repeated series prefix, as calibre-web sends it for chapters", function()
+        assert.are.equal("Chapter 25",
+            SyncEngine.short_title("S - S Chapter 25", "S"))
+    end)
+
+    it("drops a single series prefix", function()
+        assert.are.equal("Chapter 3", SyncEngine.short_title("S - Chapter 3", "S"))
+    end)
+
+    it("handles en dash and colon separators", function()
+        assert.are.equal("3", SyncEngine.short_title("S – 3", "S"))
+        assert.are.equal("3", SyncEngine.short_title("S: 3", "S"))
+    end)
+
+    it("strips a multi-byte prefix without splitting characters", function()
+        assert.are.equal("3", SyncEngine.short_title("가나 - 3", "가나"))
+        -- "가" and "가나" share a leading byte; the shorter name must not match.
+        assert.are.equal("가나 - 3", SyncEngine.short_title("가나 - 3", "다라"))
+    end)
+
+    it("keeps the title when stripping would leave nothing", function()
+        assert.are.equal("S", SyncEngine.short_title("S", "S"))
+        assert.are.equal("S -", SyncEngine.short_title("S -", "S"))
+    end)
+
+    it("only strips at a separator or space, never mid-word", function()
+        assert.are.equal("Some Book", SyncEngine.short_title("Some Book", "S"))
+        assert.are.equal("가나다 이야기", SyncEngine.short_title("가나다 이야기", "가나"))
+    end)
+
+    it("leaves unrelated titles and missing series alone", function()
+        assert.are.equal("Some Book", SyncEngine.short_title("Some Book", nil))
+        assert.are.equal("Some Book", SyncEngine.short_title("Some Book", ""))
+    end)
+end)
+
+describe("SyncEngine.group_by_series", function()
+    local function book(uuid, opts)
+        opts = opts or {}
+        return {
+            uuid = uuid,
+            title = opts.title or uuid,
+            series_name = opts.series,
+            series_number = opts.number,
+            downloaded = opts.downloaded,
+        }
+    end
+
+    it("groups by series and orders chapters by number, not by title", function()
+        local groups, standalone = SyncEngine.group_by_series{
+            book("c10", { series = "S", number = 10, title = "10화" }),
+            book("c2", { series = "S", number = 2, title = "2화" }),
+            book("c1", { series = "S", number = 1, title = "1화" }),
+        }
+        assert.are.equal(0, #standalone)
+        assert.are.equal(1, #groups)
+        assert.are.equal("S", groups[1].name)
+        assert.are.same({ "c1", "c2", "c10" },
+            { groups[1].books[1].uuid, groups[1].books[2].uuid, groups[1].books[3].uuid })
+    end)
+
+    it("sorts numeric strings as numbers", function()
+        local groups = SyncEngine.group_by_series{
+            book("c10", { series = "S", number = "10" }),
+            book("c2", { series = "S", number = "2" }),
+        }
+        assert.are.equal("c2", groups[1].books[1].uuid)
+    end)
+
+    it("puts chapters without a number last, ordered by title", function()
+        local groups = SyncEngine.group_by_series{
+            book("z", { series = "S", title = "Zebra" }),
+            book("a", { series = "S", title = "Apple" }),
+            book("n", { series = "S", number = 1 }),
+        }
+        assert.are.same({ "n", "a", "z" },
+            { groups[1].books[1].uuid, groups[1].books[2].uuid, groups[1].books[3].uuid })
+    end)
+
+    it("counts downloaded chapters per series", function()
+        local groups = SyncEngine.group_by_series{
+            book("c1", { series = "S", number = 1, downloaded = true }),
+            book("c2", { series = "S", number = 2 }),
+        }
+        assert.are.equal(1, groups[1].downloaded)
+        assert.are.equal(2, #groups[1].books)
+    end)
+
+    it("separates books with no series and sorts both lists by name", function()
+        local groups, standalone = SyncEngine.group_by_series{
+            book("b", { title = "Beta" }),
+            book("a", { title = "Alpha" }),
+            book("s2", { series = "Second", number = 1 }),
+            book("s1", { series = "First", number = 1 }),
+        }
+        assert.are.same({ "First", "Second" }, { groups[1].name, groups[2].name })
+        assert.are.same({ "Alpha", "Beta" }, { standalone[1].title, standalone[2].title })
+    end)
+
+    it("treats an empty series name as no series", function()
+        local groups, standalone = SyncEngine.group_by_series{ book("a", { series = "" }) }
+        assert.are.equal(0, #groups)
+        assert.are.equal(1, #standalone)
+    end)
+end)
