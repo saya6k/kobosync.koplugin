@@ -3,8 +3,9 @@ name: CI
 on:
   push:
     branches: [main]
-    tags: ["v*"]
   pull_request:
+  release:
+    types: [published]
 
 jobs:
   test:
@@ -31,15 +32,43 @@ jobs:
 
   release:
     needs: test
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      # Build from the released tag, not from main: the two differ whenever a
+      # release is cut from an older commit. fetch-depth 0 so the version-sync
+      # step below can commit onto main from this same clone.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+      - name: Stamp version from tag
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          VERSION="${TAG#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          sed -i "s/^\( *version = \)\"[^\"]*\"/\1\"$VERSION\"/" _meta.lua
+          grep -q "version = \"$VERSION\"" _meta.lua
       - name: Package
         run: ./scripts/package.sh
       - uses: softprops/action-gh-release@v2
         with:
           files: dist/kobosync.koplugin.zip
-          generate_release_notes: true
+      # Keep the default branch in sync so the "Direct download from repo"
+      # install path (branch zipball) reports the same version as the release.
+      - name: Sync version to main
+        run: |
+          git checkout -- _meta.lua
+          git switch -c version-sync origin/main
+          sed -i "s/^\( *version = \)\"[^\"]*\"/\1\"$VERSION\"/" _meta.lua
+          if git diff --quiet -- _meta.lua; then
+            echo "main is already at $VERSION"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: set version to $VERSION [skip ci]" -- _meta.lua
+          git push origin HEAD:main
