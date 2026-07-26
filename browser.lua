@@ -4,6 +4,7 @@ local ButtonDialog = require("ui/widget/buttondialog")
 local InfoMessage = require("ui/widget/infomessage")
 local ImageViewer = require("ui/widget/imageviewer")
 local InputDialog = require("ui/widget/inputdialog")
+local CoverMenu = require("covermenu")
 local Menu = require("ui/widget/menu")
 local NetworkMgr = require("ui/network/manager")
 local UIManager = require("ui/uimanager")
@@ -163,6 +164,8 @@ local function show_filter_menu(plugin, menu)
     local dialog
     local downloaded_label = menu.kobosync_downloaded_only
         and _("Show all books") or _("Show downloaded only")
+    local covers_label = plugin.show_covers
+        and _("Hide covers") or _("Show covers")
     dialog = ButtonDialog:new{
         buttons = {
             {{
@@ -180,6 +183,17 @@ local function show_filter_menu(plugin, menu)
                     show_top(plugin, menu)
                 end,
             }},
+            {{
+                text = covers_label,
+                callback = function()
+                    UIManager:close(dialog)
+                    plugin:setShowCovers(not plugin.show_covers)
+                    -- The row widget differs between the two, so the whole
+                    -- browser is rebuilt rather than just repainted.
+                    UIManager:close(menu)
+                    Browser.show(plugin)
+                end,
+            }},
         },
     }
     UIManager:show(dialog)
@@ -187,7 +201,10 @@ end
 
 function Browser.show(plugin)
     local menu
-    menu = Menu:new{
+    -- Covers need a row widget KOReader's Menu cannot provide; see covermenu.lua.
+    local class = plugin.show_covers and CoverMenu or Menu
+    local tried_covers = {}
+    menu = class:new{
         title = _("Kobo Sync library"),
         subtitle = "",
         item_table = {},
@@ -203,6 +220,19 @@ function Browser.show(plugin)
             show_top(plugin, menu)
         end,
     }
+    if plugin.show_covers then
+        menu.cover_file_func = function(item)
+            return plugin:cachedCoverPath(item.kobosync_book)
+        end
+        menu.fetch_cover_func = function(item)
+            local book = item.kobosync_book
+            if not book or not book.cover_id or tried_covers[book.cover_id] then
+                return false
+            end
+            tried_covers[book.cover_id] = true
+            return plugin:fetchCover(plugin:getApi(), book) ~= nil
+        end
+    end
     menu.onLeftButtonTap = function()
         show_filter_menu(plugin, menu)
     end

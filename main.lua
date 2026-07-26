@@ -87,6 +87,8 @@ function KoboSync:init()
     self.download_mode = self.settings:readSetting("download_mode") or "auto"
     self.upload_on_close = self.settings:nilOrTrue("upload_on_close")
     self.image_url_template = self.settings:readSetting("image_url_template")
+    self.show_covers = self.settings:isTrue("show_covers")
+    self.cover_dir = DataStorage:getDataDir() .. "/cache/kobosync"
     self:onDispatcherRegisterActions()
     self.ui.menu:registerToMainMenu(self)
 end
@@ -382,12 +384,28 @@ end
 local COVER_WIDTH, COVER_HEIGHT = 300, 450
 
 function KoboSync:getCoverDir()
-    local dir = DataStorage:getDataDir() .. "/cache/kobosync"
-    if lfs.attributes(dir, "mode") ~= "directory" then
+    if lfs.attributes(self.cover_dir, "mode") ~= "directory" then
         lfs.mkdir(DataStorage:getDataDir() .. "/cache")
-        lfs.mkdir(dir)
+        lfs.mkdir(self.cover_dir)
     end
-    return dir
+    return self.cover_dir
+end
+
+-- The cover if it is already on disk. Never fetches: the browser calls this
+-- once per visible row while drawing a page.
+function KoboSync:cachedCoverPath(book)
+    if not book or not book.cover_id then return nil end
+    local path = self.cover_dir .. "/" .. book.cover_id .. ".jpg"
+    if lfs.attributes(path, "mode") == "file" then
+        return path
+    end
+    return nil
+end
+
+function KoboSync:setShowCovers(enabled)
+    self.show_covers = enabled
+    self.settings:saveSetting("show_covers", enabled)
+    self.settings:flush()
 end
 
 -- The template is asked for once and remembered: it is a property of the
