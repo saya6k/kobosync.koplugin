@@ -11,16 +11,16 @@
 
 local SOURCES = {
     "_meta.lua",
-    "browser.lua",
-    "covermenu.lua",
-    "koboapi.lua",
+    "kobosync_browser.lua",
+    "kobosync_covermenu.lua",
+    "kobosync_koboapi.lua",
     "kobosync_gettext.lua",
     "main.lua",
-    "readingstate.lua",
-    "statestore.lua",
-    "syncengine.lua",
-    "syncindicator.lua",
-    "wire.lua",
+    "kobosync_readingstate.lua",
+    "kobosync_statestore.lua",
+    "kobosync_syncengine.lua",
+    "kobosync_syncindicator.lua",
+    "kobosync_wire.lua",
 }
 
 local function read(path)
