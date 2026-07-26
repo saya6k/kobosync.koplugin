@@ -7,8 +7,8 @@ Kobo's sync protocol is normally only spoken by Kobo's stock firmware. This plug
 ## Features
 
 - **Library sync** — new, changed and removed books are mirrored from the server
-  - *Automatic mode*: new books download to your device on every sync
-  - *On-demand mode* (for large libraries): sync only updates the catalog; browse the server library on-device — grouped by series, chapters in reading order — and download books as you open them
+  - *Keep every book on this device*: every book the catalog lists is downloaded, and new ones follow as they arrive — on a first sync that is the whole library
+  - *On demand* (for large libraries): sync only updates the catalog; browse the server library on-device — grouped by series, chapters in reading order, optionally as a cover grid — and download books as you open them
 - **Two-way reading progress sync** — progress and finished/reading status, with newest-wins conflict resolution; queued offline and uploaded on the next sync
 - **Jump to server progress** — when a book is opened and the server knows a newer position, KOReader offers to jump there
 - **Safe deletions** — books removed on the server are only deleted locally after confirmation
@@ -27,7 +27,7 @@ Or install it via [appstore.koplugin](https://github.com/omer-faruq/appstore.kop
 1. On your server, enable Kobo sync and copy your personal Kobo Sync token/URL
    - **calibre-web**: enable *Kobo sync* in the admin settings, then *Profile → Create/View* Kobo Auth URL. The URL looks like `https://your-server/kobo/<token>`
 2. In KOReader: *Tools → Kobo Sync → Set server URL* and paste that URL
-3. Optionally choose the download folder and mode (*Download new books automatically* on/off)
+3. Optionally choose the download folder and whether to *Keep every book on this device* (off means on-demand)
 4. Tap *Synchronize now*
 
 ## Notes & limitations
