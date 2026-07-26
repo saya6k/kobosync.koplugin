@@ -22,11 +22,19 @@ local LOADED_BY_PATH = {
     ["_meta.lua"] = true,
 }
 
+-- CI installs Lua into a ".lua" directory beside the sources, so an entry that
+-- ends in .lua is not necessarily one of ours, nor even a file.
+local function is_source(entry)
+    return entry:match("%.lua$")
+        and not entry:match("^%.")
+        and lfs.attributes(entry, "mode") == "file"
+end
+
 describe("module names", function()
     it("are all prefixed, so no other plugin can pick them up by accident", function()
         local checked = 0
         for entry in lfs.dir(".") do
-            if entry:match("%.lua$") and not LOADED_BY_PATH[entry] then
+            if is_source(entry) and not LOADED_BY_PATH[entry] then
                 checked = checked + 1
                 assert.is_truthy(entry:match("^kobosync_"),
                     entry .. " must be named kobosync_" .. entry
@@ -38,7 +46,7 @@ describe("module names", function()
 
     it("are required under those names", function()
         for entry in lfs.dir(".") do
-            if entry:match("%.lua$") then
+            if is_source(entry) then
                 local file = assert(io.open(entry, "r"))
                 local source = file:read("*a")
                 file:close()
