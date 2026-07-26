@@ -92,6 +92,11 @@ function KoboApi:sync(synctoken, on_page)
     return nil, "sync did not terminate after " .. MAX_SYNC_PAGES .. " pages", token
 end
 
+-- Resource endpoint; carries the cover image URL template among other hosts.
+function KoboApi:get_initialization()
+    return self:_request_json("GET", "/v1/initialization")
+end
+
 function KoboApi:get_state(book_uuid)
     return self:_request_json("GET", "/v1/library/" .. book_uuid .. "/state")
 end

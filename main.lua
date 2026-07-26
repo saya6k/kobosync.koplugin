@@ -86,6 +86,7 @@ function KoboSync:init()
         or DataStorage:getDataDir() .. "/kobosync"
     self.download_mode = self.settings:readSetting("download_mode") or "auto"
     self.upload_on_close = self.settings:nilOrTrue("upload_on_close")
+    self.image_url_template = self.settings:readSetting("image_url_template")
     self:onDispatcherRegisterActions()
     self.ui.menu:registerToMainMenu(self)
 end
@@ -355,6 +356,64 @@ function KoboSync:downloadPlanned(state, api, plan)
     end
     Trapper:clear()
     return downloaded, failed
+end
+
+-- calibre-web ignores the size in the cover URL and returns its stored
+-- thumbnail regardless; the values are what Kobo's own clients ask for.
+local COVER_WIDTH, COVER_HEIGHT = 300, 450
+
+function KoboSync:getCoverDir()
+    local dir = DataStorage:getDataDir() .. "/cache/kobosync"
+    if lfs.attributes(dir, "mode") ~= "directory" then
+        lfs.mkdir(DataStorage:getDataDir() .. "/cache")
+        lfs.mkdir(dir)
+    end
+    return dir
+end
+
+-- The template is asked for once and remembered: it is a property of the
+-- server, not of a book.
+function KoboSync:getCoverTemplate(api)
+    if self.image_url_template then
+        return self.image_url_template
+    end
+    local init = api:get_initialization()
+    local template = SyncEngine.image_url_template(init)
+        or SyncEngine.default_image_url_template(self.server_url)
+    if template then
+        self.image_url_template = template
+        self.settings:saveSetting("image_url_template", template)
+        self.settings:flush()
+    end
+    return template
+end
+
+-- Returns the path to a locally cached cover, fetching it if needed.
+function KoboSync:fetchCover(api, book)
+    if not book.cover_id then
+        return nil, _("this book was synced before covers were supported")
+    end
+    local path = self:getCoverDir() .. "/" .. book.cover_id .. ".jpg"
+    if lfs.attributes(path, "mode") == "file" then
+        return path
+    end
+    local template = self:getCoverTemplate(api)
+    local url = SyncEngine.cover_url(template, book.cover_id, COVER_WIDTH, COVER_HEIGHT)
+    if not url then
+        return nil, _("no cover URL for this server")
+    end
+    local tmp_path = path .. ".part"
+    local file = io.open(tmp_path, "wb")
+    if not file then
+        return nil, _("cannot write to the cover cache")
+    end
+    local ok, err = api:download(url, ltn12.sink.file(file))
+    if not ok then
+        os.remove(tmp_path)
+        return nil, err
+    end
+    os.rename(tmp_path, path)
+    return path
 end
 
 function KoboSync:downloadBook(state, api, item)
