@@ -7,6 +7,7 @@ local InfoMessage = require("ui/widget/infomessage")
 local InputDialog = require("ui/widget/inputdialog")
 local LuaSettings = require("luasettings")
 local NetworkMgr = require("ui/network/manager")
+local Notification = require("ui/widget/notification")
 local Trapper = require("ui/trapper")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -18,7 +19,8 @@ local rapidjson = require("rapidjson")
 local socket = require("socket")
 local socketutil = require("socketutil")
 local _ = require("gettext")
-local T = require("ffi/util").template
+local ffiUtil = require("ffi/util")
+local T = ffiUtil.template
 
 local Event = require("ui/event")
 
@@ -26,6 +28,7 @@ local KoboApi = require("koboapi")
 local ReadingState = require("readingstate")
 local StateStore = require("statestore")
 local SyncEngine = require("syncengine")
+local Wire = require("wire")
 
 -- Ask before bulk downloads (first sync, or mass changes later).
 local BULK_CONFIRM_THRESHOLD = 10
@@ -130,29 +133,73 @@ end
 
 -- Library pages block for about ten seconds each while the server builds them.
 -- Run in process, that is long enough for Android to decide the app has hung
--- and offer to close it, and no tap can be seen until the request returns.
--- Trapper runs the request in a forked subprocess instead and polls for its
--- result, so the screen stays live and the message stays dismissable
--- throughout. This is the same mechanism KOReader's own Wikipedia, translator
--- and OPDS browser use for their network calls.
+-- and offer to close it. Trapper has a fork-and-poll runner for exactly this,
+-- but it puts a TrapWidget over the screen that claims every tap -- fine for a
+-- two-second lookup, and unbearable for the minutes a full walk takes, since
+-- the reader underneath stops responding.
 --
--- Dismissing asks before giving up; choosing to carry on simply re-issues the
--- request, which is safe because a sync page is a pure function of the token.
-function KoboSync:syncRequest(req)
-    while true do
-        local completed, resp, err = Trapper:dismissableRunInSubprocess(function()
-            return http_request(req)
-        end, self.sync_progress_text or _("Kobo Sync: synchronizing…"))
-        if completed then
-            return resp, err
-        end
-        if Trapper:confirm(
-                _("Stop syncing?\n\nWhat has been synced so far is kept, and syncing again resumes from here."),
-                _("Continue"), _("Stop")) then
-            self.sync_cancelled = true
-            return nil, KoboApi.CANCELLED
+-- So: the same loop without that widget. The coroutine yields to UIManager
+-- between checks, so the event loop keeps running and taps reach whatever is on
+-- screen; the walk is stopped from the menu instead of by tapping.
+local SUBPROCESS_POLL_SECONDS = 0.25
+
+-- Reap the child so it does not linger as a zombie. It may need a moment after
+-- being terminated, hence the retry.
+local function collect_subprocess(pid)
+    local function collect()
+        if not ffiUtil.isSubProcessDone(pid) then
+            UIManager:scheduleIn(5, collect)
         end
     end
+    UIManager:scheduleIn(1, collect)
+end
+
+-- Runs `task` in a subprocess and returns what it wrote, as a string.
+function KoboSync:runInSubprocessNonModal(task)
+    local co = coroutine.running()
+    if not co then
+        -- Nothing to keep responsive; run it here.
+        return task()
+    end
+    local pid, parent_read_fd = ffiUtil.runInSubProcess(function(_pid, child_write_fd)
+        ffiUtil.writeToFD(child_write_fd, task() or "", true)
+    end, true)
+    if not pid then
+        return nil, "could not start a subprocess"
+    end
+    while true do
+        local resume = function() coroutine.resume(co, true) end
+        UIManager:scheduleIn(SUBPROCESS_POLL_SECONDS, resume)
+        coroutine.yield()
+        if self.sync_cancelled then
+            UIManager:unschedule(resume)
+            ffiUtil.terminateSubProcess(pid)
+            ffiUtil.readAllFromFD(parent_read_fd) -- also closes it
+            collect_subprocess(pid)
+            return nil, KoboApi.CANCELLED
+        end
+        local done = ffiUtil.isSubProcessDone(pid)
+        -- A child blocked writing more than the pipe buffer holds is not done
+        -- yet but already has data waiting, so both have to be checked.
+        local readable = ffiUtil.getNonBlockingReadSize(parent_read_fd) ~= 0
+        if done or readable then
+            local output = readable and ffiUtil.readAllFromFD(parent_read_fd) or ""
+            if not done then
+                collect_subprocess(pid)
+            end
+            return output
+        end
+    end
+end
+
+function KoboSync:syncRequest(req)
+    local output, err = self:runInSubprocessNonModal(function()
+        return Wire.encode(http_request(req))
+    end)
+    if not output then
+        return nil, err
+    end
+    return Wire.decode(output)
 end
 
 function KoboSync:getApi()
@@ -174,6 +221,18 @@ function KoboSync:addToMainMenu(menu_items)
                 text = _("Synchronize now"),
                 enabled_func = function() return self.server_url ~= nil end,
                 callback = function() self:onKoboSyncSync() end,
+            },
+            {
+                -- The walk runs in the background with nothing covering the
+                -- screen, so this is where it gets stopped.
+                text = _("Stop synchronizing"),
+                enabled_func = function() return self.syncing == true end,
+                callback = function()
+                    self.sync_cancelled = true
+                    UIManager:show(InfoMessage:new{
+                        text = _("Kobo Sync: stopping after the current page.\n\nWhat has been synced is kept, and syncing again resumes from here."),
+                    })
+                end,
             },
             {
                 text = _("Browse server library"),
@@ -283,8 +342,22 @@ function KoboSync:onKoboSyncSync()
         UIManager:show(InfoMessage:new{ text = _("Kobo Sync: set the server URL first.") })
         return true
     end
+    if self.syncing then
+        UIManager:show(InfoMessage:new{ text = _("Kobo Sync: already synchronizing.") })
+        return true
+    end
     NetworkMgr:runWhenOnline(function()
-        Trapper:wrap(function() self:doSync() end)
+        Trapper:wrap(function()
+            self.syncing = true
+            local ok, err = pcall(function() self:doSync() end)
+            self.syncing = false
+            if not ok then
+                logger.warn("KoboSync: sync failed:", err)
+                UIManager:show(InfoMessage:new{
+                    text = T(_("Kobo Sync failed: %1"), tostring(err)),
+                })
+            end
+        end)
     end)
     return true
 end
@@ -296,15 +369,18 @@ function KoboSync:doSync()
     local result = SyncEngine.new_result()
     local seen = 0
     self.sync_cancelled = false
-    -- Shown by syncRequest while a page is in flight. The protocol sends no
-    -- total, so this counts up instead of filling a bar: the response
-    -- advertises a sync token and whether more pages follow, nothing more.
-    self.sync_progress_text = _("Kobo Sync: synchronizing…\n\nTap to stop.")
+    -- The protocol sends no total, so progress counts up rather than filling a
+    -- bar: a response advertises a sync token and whether more pages follow,
+    -- nothing more.
+    UIManager:show(Notification:new{ text = _("Kobo Sync: synchronizing…") })
     local token, err, partial_token = api:sync(state:get_synctoken(), function(items, page)
         SyncEngine.process_items(state, items, result)
         seen = seen + #items
-        self.sync_progress_text =
-            T(_("Kobo Sync: %1 items, page %2…\n\nTap to stop."), seen, page + 1)
+        -- A toast rather than a dialog: it neither covers the page being read
+        -- nor swallows taps meant for it.
+        UIManager:show(Notification:new{
+            text = T(_("Kobo Sync: %1 items, page %2…"), seen, page),
+        })
         if self.sync_cancelled then
             return false
         end

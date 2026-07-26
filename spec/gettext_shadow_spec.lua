@@ -18,6 +18,7 @@ local SOURCES = {
     "readingstate.lua",
     "statestore.lua",
     "syncengine.lua",
+    "wire.lua",
 }
 
 local function read(path)
