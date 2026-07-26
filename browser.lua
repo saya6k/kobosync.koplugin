@@ -225,13 +225,6 @@ local function show_filter_menu(plugin, menu)
             end,
         }},
         {{
-            text = mode_label("list", _("Cover list")),
-            callback = function()
-                UIManager:close(dialog)
-                switch_cover_mode(plugin, menu, "list")
-            end,
-        }},
-        {{
             text = mode_label("grid", _("Cover grid")),
             callback = function()
                 UIManager:close(dialog)
@@ -258,11 +251,10 @@ end
 function Browser.show(plugin)
     local menu
     -- Covers need a row widget KOReader's Menu cannot provide; see covermenu.lua.
-    local with_covers = plugin.cover_mode == "list" or plugin.cover_mode == "grid"
+    local with_covers = plugin.cover_mode == "grid"
     local class = with_covers and CoverMenu or Menu
     local tried_covers = {}
     menu = class:new{
-        kobosync_grid = plugin.cover_mode == "grid",
         kobosync_grid_cols = plugin.grid_cols,
         title = _("Kobo Sync library"),
         subtitle = "",

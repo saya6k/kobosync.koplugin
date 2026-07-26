@@ -87,9 +87,14 @@ function KoboSync:init()
     self.download_mode = self.settings:readSetting("download_mode") or "auto"
     self.upload_on_close = self.settings:nilOrTrue("upload_on_close")
     self.image_url_template = self.settings:readSetting("image_url_template")
-    -- "off" | "list" | "grid". Migrated from the earlier boolean setting.
-    self.cover_mode = self.settings:readSetting("cover_mode")
-        or (self.settings:isTrue("show_covers") and "list" or "off")
+    -- "off" | "grid". A cover boxed by a list row stayed too small to be worth
+    -- the fetch, so the list variant was dropped; anyone left on it, or on the
+    -- boolean that preceded it, lands on the grid.
+    local cover_mode = self.settings:readSetting("cover_mode")
+    if cover_mode == "list" or (cover_mode == nil and self.settings:isTrue("show_covers")) then
+        cover_mode = "grid"
+    end
+    self.cover_mode = cover_mode or "off"
     self.grid_cols = tonumber(self.settings:readSetting("grid_cols")) or 3
     self.cover_dir = DataStorage:getDataDir() .. "/cache/kobosync"
     self:onDispatcherRegisterActions()
