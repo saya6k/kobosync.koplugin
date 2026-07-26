@@ -275,6 +275,15 @@ function KoboSync:doSync()
     state:save()
     Trapper:clear()
 
+    -- Books deleted on the device outside the plugin would otherwise stay
+    -- flagged as downloaded, and the planner would never fetch them again.
+    local missing = SyncEngine.reconcile_downloads(state, function(path)
+        return lfs.attributes(path, "mode") == "file"
+    end)
+    if missing > 0 then
+        state:save()
+    end
+
     local plan = SyncEngine.plan_downloads(state, self.download_mode)
     self:maybeConfirmDownloads(plan, first_sync, function(confirmed)
         local downloaded, failed = 0, 0
@@ -291,6 +300,9 @@ function KoboSync:doSync()
             end
             if failed > 0 then
                 table.insert(lines, T(_("Failed downloads: %1"), failed))
+            end
+            if missing > 0 then
+                table.insert(lines, T(_("Missing locally: %1"), missing))
             end
             if pushed > 0 or pulled > 0 then
                 table.insert(lines, T(_("Reading progress: %1 sent, %2 received"), pushed, pulled))
@@ -348,7 +360,8 @@ end
 function KoboSync:downloadBook(state, api, item)
     local book = state:get_book(item.uuid)
     if not book then return nil, "not in catalog" end
-    local base = SyncEngine.sanitize_filename(book.title, book.author)
+    local base = SyncEngine.sanitize_filename(
+        SyncEngine.collapse_series_title(book.title, book.series_name), book.author)
     local ext = SyncEngine.extension_for(item.format)
     local filename = SyncEngine.unique_filename(base, ext, item.uuid, function(name)
         -- Taken only when a different catalog book owns that file; an

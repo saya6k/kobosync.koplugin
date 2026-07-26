@@ -370,3 +370,76 @@ describe("SyncEngine.filter_books", function()
         })))
     end)
 end)
+
+describe("SyncEngine.collapse_series_title", function()
+    it("keeps one copy of a repeated series name, for use in filenames", function()
+        assert.are.equal("S Chapter 25",
+            SyncEngine.collapse_series_title("S - S Chapter 25", "S"))
+    end)
+
+    it("leaves a title that does not repeat the series", function()
+        assert.are.equal("Some Book", SyncEngine.collapse_series_title("Some Book", "S"))
+        assert.are.equal("Some Book", SyncEngine.collapse_series_title("Some Book", nil))
+    end)
+
+    it("is idempotent on an already collapsed title", function()
+        local once = SyncEngine.collapse_series_title("S - S Chapter 25", "S")
+        assert.are.equal(once, SyncEngine.collapse_series_title(once, "S"))
+    end)
+end)
+
+describe("SyncEngine.reconcile_downloads", function()
+    local function store_with(books)
+        local store = new_store()
+        for uuid, fields in pairs(books) do
+            store:upsert_book(uuid, fields)
+        end
+        return store
+    end
+
+    it("clears the flag when the local file is gone", function()
+        local store = store_with{
+            gone = { downloaded = true, local_path = "/b/gone.epub" },
+            kept = { downloaded = true, local_path = "/b/kept.epub" },
+        }
+        local reset = SyncEngine.reconcile_downloads(store, function(path)
+            return path == "/b/kept.epub"
+        end)
+        assert.are.equal(1, reset)
+        assert.is_false(store:get_book("gone").downloaded)
+        assert.is_true(store:get_book("kept").downloaded)
+    end)
+
+    it("clears the flag when local_path was never recorded", function()
+        local store = store_with{ odd = { downloaded = true } }
+        assert.are.equal(1, SyncEngine.reconcile_downloads(store, function() return true end))
+        assert.is_false(store:get_book("odd").downloaded)
+    end)
+
+    it("never probes books that are not marked downloaded", function()
+        local store = store_with{ a = { downloaded = false }, b = {} }
+        local probed = 0
+        local reset = SyncEngine.reconcile_downloads(store, function()
+            probed = probed + 1
+            return false
+        end)
+        assert.are.equal(0, reset)
+        assert.are.equal(0, probed)
+    end)
+
+    it("makes a locally deleted book eligible for download again", function()
+        local store = new_store()
+        SyncEngine.process_items(store, {
+            { NewEntitlement = entitlement("u1", { title = "A" }) },
+        }, SyncEngine.new_result())
+        store:upsert_book("u1", {
+            downloaded = true, local_path = "/b/a.epub",
+            downloaded_revision = "u1", downloaded_size = 1000,
+        })
+        assert.are.equal(0, #SyncEngine.plan_downloads(store, "auto"))
+        SyncEngine.reconcile_downloads(store, function() return false end)
+        local plan = SyncEngine.plan_downloads(store, "auto")
+        assert.are.equal(1, #plan)
+        assert.are.equal("u1", plan[1].uuid)
+    end)
+end)
