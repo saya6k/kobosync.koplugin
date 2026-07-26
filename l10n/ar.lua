@@ -113,6 +113,8 @@ return {
         "إعادة تعيين المزامنة",
     ["Runs only while Wi-Fi is already on, and only refreshes the catalog: an unattended run never starts downloads, and deletions it finds are held until the next sync you start yourself."] =
         "لا تعمل إلا عندما تكون شبكة Wi-Fi مفعّلة بالفعل، وتحدّث الفهرس فقط: التشغيل التلقائي لا يبدأ أي تنزيل، وما يجده من عمليات حذف يُؤجَّل إلى المزامنة التالية التي تبدأها بنفسك.",
+    ["Runs the same unattended sync once the device is online, rather than after a fixed wait: catalog only, and given up on if the network has not appeared within five minutes."] =
+        "يشغّل المزامنة التلقائية نفسها فور اتصال الجهاز بالشبكة بدلاً من انتظار مدة ثابتة: الفهرس فقط، ويُصرف النظر عنها إذا لم تظهر الشبكة خلال خمس دقائق.",
     ["Save"] =
         "حفظ",
     ["Search"] =
@@ -139,12 +141,16 @@ return {
         "مزامنة تلقائية: كل %1 دقيقة",
     ["Sync automatically: off"] =
         "مزامنة تلقائية: معطّلة",
+    ["Sync when KOReader starts"] =
+        "المزامنة عند بدء تشغيل KOReader",
     ["Synchronize now"] =
         "مزامنة الآن",
     ["Synchronizes library and reading progress with a self-hosted Kobo Sync server "] =
         "يزامن المكتبة وتقدم القراءة مع خادم Kobo Sync مُستضاف ذاتيًا ",
     ["Text list"] =
         "قائمة نصية",
+    ["Timestamps refreshed: %1"] =
+        "تم تحديث الطوابع الزمنية: %1",
     ["Upload reading progress when closing a book"] =
         "رفع تقدم القراءة عند إغلاق كتاب",
     ["cannot write to the cover cache"] =

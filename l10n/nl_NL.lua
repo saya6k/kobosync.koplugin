@@ -113,6 +113,8 @@ return {
         "Synchronisatie herstellen",
     ["Runs only while Wi-Fi is already on, and only refreshes the catalog: an unattended run never starts downloads, and deletions it finds are held until the next sync you start yourself."] =
         "Draait alleen als wifi al aan staat en werkt alleen de catalogus bij: een automatische ronde start nooit downloads, en gevonden verwijderingen wachten op de volgende synchronisatie die u zelf start.",
+    ["Runs the same unattended sync once the device is online, rather than after a fixed wait: catalog only, and given up on if the network has not appeared within five minutes."] =
+        "Draait dezelfde automatische synchronisatie zodra het apparaat online is in plaats van na een vaste wachttijd: alleen de catalogus, en opgegeven als het netwerk binnen vijf minuten niet verschijnt.",
     ["Save"] =
         "Opslaan",
     ["Search"] =
@@ -139,12 +141,16 @@ return {
         "Automatisch synchroniseren: elke %1 minuten",
     ["Sync automatically: off"] =
         "Automatisch synchroniseren: uit",
+    ["Sync when KOReader starts"] =
+        "Synchroniseren bij starten van KOReader",
     ["Synchronize now"] =
         "Nu synchroniseren",
     ["Synchronizes library and reading progress with a self-hosted Kobo Sync server "] =
         "Synchroniseert bibliotheek en leesvoortgang met een zelfgehoste Kobo Sync-server ",
     ["Text list"] =
         "Tekstlijst",
+    ["Timestamps refreshed: %1"] =
+        "Tijdstempels bijgewerkt: %1",
     ["Upload reading progress when closing a book"] =
         "Leesvoortgang uploaden bij het sluiten van een boek",
     ["cannot write to the cover cache"] =

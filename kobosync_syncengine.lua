@@ -10,10 +10,37 @@ function SyncEngine.new_result()
     return {
         new = 0,
         changed = 0,
+        -- Entries the server re-sent with a fresh timestamp and nothing else
+        -- altered. calibre-web bumps one book per sync request, so counting
+        -- these as changes made every run report a change that was not one.
+        touched = 0,
         states = 0,
         removed = 0,
         delete_candidates = {},
     }
+end
+
+-- The fields worth calling a change. last_modified is deliberately absent: on
+-- its own it means the server touched the row, not that the book differs.
+local CONTENT_FIELDS = {
+    "title", "author", "series_name", "series_number", "series_id",
+    "revision_id", "cover_id",
+}
+
+local function content_differs(existing, fields)
+    if not existing then return true end
+    for _idx, key in ipairs(CONTENT_FIELDS) do
+        if existing[key] ~= fields[key] then
+            return true
+        end
+    end
+    -- Download urls are a table, and the size is what decides a re-download,
+    -- so compare what the picker would actually use.
+    local before = SyncEngine.pick_download(existing.download_urls)
+    local after = SyncEngine.pick_download(fields.download_urls)
+    if (before and before.Url) ~= (after and after.Url) then return true end
+    if (before and before.Size) ~= (after and after.Size) then return true end
+    return false
 end
 
 local function join_contributors(contributors)
@@ -123,11 +150,16 @@ local function process_entitlement(store, e, is_new, result)
     if e.ReadingState then
         fields.server_state = e.ReadingState
     end
+    -- Compared before the upsert, which would otherwise overwrite what is
+    -- being compared against.
+    local changed = is_new or content_differs(store:get_book(uuid), fields)
     store:upsert_book(uuid, fields)
     if is_new then
         result.new = result.new + 1
-    else
+    elseif changed then
         result.changed = result.changed + 1
+    else
+        result.touched = result.touched + 1
     end
 end
 

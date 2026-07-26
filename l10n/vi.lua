@@ -113,6 +113,8 @@ return {
         "Đặt lại đồng bộ",
     ["Runs only while Wi-Fi is already on, and only refreshes the catalog: an unattended run never starts downloads, and deletions it finds are held until the next sync you start yourself."] =
         "Chỉ chạy khi Wi-Fi đã bật và chỉ làm mới danh mục: lần chạy tự động không bao giờ bắt đầu tải xuống, và các mục bị xóa được giữ lại cho lần đồng bộ bạn tự khởi động.",
+    ["Runs the same unattended sync once the device is online, rather than after a fixed wait: catalog only, and given up on if the network has not appeared within five minutes."] =
+        "Chạy cùng một lần đồng bộ tự động ngay khi thiết bị có mạng, thay vì sau một khoảng chờ cố định: chỉ danh mục, và bỏ qua nếu mạng không xuất hiện trong năm phút.",
     ["Save"] =
         "Lưu",
     ["Search"] =
@@ -139,12 +141,16 @@ return {
         "Tự động đồng bộ: mỗi %1 phút",
     ["Sync automatically: off"] =
         "Tự động đồng bộ: tắt",
+    ["Sync when KOReader starts"] =
+        "Đồng bộ khi khởi động KOReader",
     ["Synchronize now"] =
         "Đồng bộ ngay",
     ["Synchronizes library and reading progress with a self-hosted Kobo Sync server "] =
         "Đồng bộ thư viện và tiến độ đọc với máy chủ Kobo Sync tự lưu trữ ",
     ["Text list"] =
         "Danh sách văn bản",
+    ["Timestamps refreshed: %1"] =
+        "Đã làm mới dấu thời gian: %1",
     ["Upload reading progress when closing a book"] =
         "Tải tiến độ đọc lên khi đóng sách",
     ["cannot write to the cover cache"] =

@@ -113,6 +113,8 @@ return {
         "동기화 초기화",
     ["Runs only while Wi-Fi is already on, and only refreshes the catalog: an unattended run never starts downloads, and deletions it finds are held until the next sync you start yourself."] =
         "Wi-Fi가 이미 켜져 있을 때만 실행되며 목록만 갱신합니다. 자동 실행은 다운로드를 시작하지 않고, 발견한 삭제 항목은 직접 시작한 다음 동기화까지 보류됩니다.",
+    ["Runs the same unattended sync once the device is online, rather than after a fixed wait: catalog only, and given up on if the network has not appeared within five minutes."] =
+        "고정된 시간을 기다리는 대신 기기가 온라인이 되면 같은 자동 동기화를 실행합니다. 목록만 갱신하며, 5분 안에 네트워크가 잡히지 않으면 포기합니다.",
     ["Save"] =
         "저장",
     ["Search"] =
@@ -139,12 +141,16 @@ return {
         "자동 동기화: %1분마다",
     ["Sync automatically: off"] =
         "자동 동기화: 끔",
+    ["Sync when KOReader starts"] =
+        "KOReader 시작할 때 동기화",
     ["Synchronize now"] =
         "지금 동기화",
     ["Synchronizes library and reading progress with a self-hosted Kobo Sync server "] =
         "자체 호스팅 Kobo Sync 서버와 서재 및 읽기 진행률을 동기화합니다 ",
     ["Text list"] =
         "텍스트 목록",
+    ["Timestamps refreshed: %1"] =
+        "타임스탬프 갱신: %1",
     ["Upload reading progress when closing a book"] =
         "책을 닫을 때 읽기 진행률 업로드",
     ["cannot write to the cover cache"] =
