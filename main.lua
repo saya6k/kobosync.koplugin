@@ -35,6 +35,23 @@ local KoboSync = WidgetContainer:extend{
     is_doc_only = false,
 }
 
+-- socketutil's LARGE_* pair (10s block) is too tight for /v1/library/sync: the
+-- server builds the whole page before sending anything, which on a large
+-- library takes over ten seconds of silence on the socket. LuaSec reports that
+-- as "wantread" rather than a timeout, so the sync just fails.
+local API_BLOCK_TIMEOUT = 30
+local API_TOTAL_TIMEOUT = 120
+
+-- LuaSocket/LuaSec surface timeouts as opaque codes; say what they mean.
+local function describe_error(status)
+    if status == socketutil.TIMEOUT_CODE
+        or status == socketutil.SSL_HANDSHAKE_CODE
+        or status == socketutil.SINK_TIMEOUT_CODE then
+        return _("the server took too long to respond")
+    end
+    return tostring(status or "network error")
+end
+
 -- HTTP implementation injected into KoboApi (see koboapi.lua for the shape).
 local function http_request(req)
     local pieces = {}
@@ -51,13 +68,13 @@ local function http_request(req)
     if req.sink then
         socketutil:set_timeout(socketutil.FILE_BLOCK_TIMEOUT, socketutil.FILE_TOTAL_TIMEOUT)
     else
-        socketutil:set_timeout(socketutil.LARGE_BLOCK_TIMEOUT, socketutil.LARGE_TOTAL_TIMEOUT)
+        socketutil:set_timeout(API_BLOCK_TIMEOUT, API_TOTAL_TIMEOUT)
     end
     local code, headers, status = socket.skip(1, http.request(request))
     socketutil:reset_timeout()
     if headers == nil or type(code) ~= "number" then
         logger.warn("KoboSync: network error:", status or code)
-        return nil, tostring(status or code or "network error")
+        return nil, describe_error(status or code)
     end
     return { code = code, headers = headers, body = table.concat(pieces) }
 end
