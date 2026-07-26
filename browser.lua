@@ -69,7 +69,7 @@ local show_top
 local function show_series(plugin, menu, group)
     table.insert(menu.paths, group.name)
     local items = {}
-    for _, book in ipairs(group.books) do
+    for _idx, book in ipairs(group.books) do
         table.insert(items, book_item(plugin, menu, book,
             SyncEngine.short_title(book.title, group.name)))
     end
@@ -83,13 +83,13 @@ end
 local function show_search_results(plugin, menu)
     local groups, standalone = SyncEngine.group_by_series(visible_books(plugin, menu))
     local items = {}
-    for _, group in ipairs(groups) do
-        for _, book in ipairs(group.books) do
+    for _idx, group in ipairs(groups) do
+        for _idx, book in ipairs(group.books) do
             table.insert(items, book_item(plugin, menu, book,
                 group.name .. " · " .. SyncEngine.short_title(book.title, group.name)))
         end
     end
-    for _, book in ipairs(standalone) do
+    for _idx, book in ipairs(standalone) do
         table.insert(items, book_item(plugin, menu, book, standalone_text(book)))
     end
     -- Non-empty paths is what enables Menu's return arrow.
@@ -105,7 +105,7 @@ local function show_series_list(plugin, menu)
     local groups, standalone = SyncEngine.group_by_series(visible_books(plugin, menu))
     local items = {}
     local total = #standalone
-    for _, group in ipairs(groups) do
+    for _idx, group in ipairs(groups) do
         total = total + #group.books
         table.insert(items, {
             text = group.name,
@@ -117,7 +117,7 @@ local function show_series_list(plugin, menu)
             end,
         })
     end
-    for _, book in ipairs(standalone) do
+    for _idx, book in ipairs(standalone) do
         table.insert(items, book_item(plugin, menu, book, standalone_text(book)))
     end
     menu:switchItemTable(_("Kobo Sync library"), items, 1, nil,
@@ -176,7 +176,7 @@ local GRID_COL_CHOICES = { 2, 3, 4, 5 }
 local function show_grid_cols_menu(plugin, menu)
     local dialog
     local buttons = {}
-    for _, cols in ipairs(GRID_COL_CHOICES) do
+    for _idx, cols in ipairs(GRID_COL_CHOICES) do
         table.insert(buttons, {{
             text = (plugin.grid_cols == cols and "✓ " or "") .. T(_("%1 columns"), cols),
             callback = function()
