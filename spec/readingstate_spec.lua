@@ -111,3 +111,62 @@ describe("ReadingState.resolve", function()
         assert.are.equal("noop", ReadingState.resolve(nil, nil))
     end)
 end)
+
+describe("ReadingState.plan", function()
+    local function server(iso, status)
+        return {
+            LastModified = iso,
+            StatusInfo = { Status = status or "Reading" },
+            CurrentBookmark = { ProgressPercent = 10 },
+        }
+    end
+
+    it("pushes a book finished on the device", function()
+        -- The case that went unnoticed: sync only ever pulled, so marking a
+        -- book read never reached the server.
+        local local_state = {
+            percent = 1, status = "complete",
+            modified_time = ReadingState.iso_to_epoch("2026-07-27T10:00:00Z"),
+        }
+        assert.are.equal("push",
+            ReadingState.plan(local_state, server("2026-07-27T09:00:00Z"), {}))
+    end)
+
+    it("pulls when the server is ahead", function()
+        local local_state = { modified_time = ReadingState.iso_to_epoch("2026-07-27T09:00:00Z") }
+        assert.are.equal("pull",
+            ReadingState.plan(local_state, server("2026-07-27T10:00:00Z"), {}))
+    end)
+
+    it("does not pull the same server state twice", function()
+        local local_state = { modified_time = ReadingState.iso_to_epoch("2026-07-27T09:00:00Z") }
+        assert.are.equal("noop", ReadingState.plan(local_state, server("2026-07-27T10:00:00Z"),
+            { applied_state_time = "2026-07-27T10:00:00Z" }))
+    end)
+
+    it("does not push a sidecar it has already sent", function()
+        local written = ReadingState.iso_to_epoch("2026-07-27T10:00:00Z")
+        assert.are.equal("noop", ReadingState.plan(
+            { modified_time = written }, server("2026-07-27T09:00:00Z"),
+            { pushed_local_time = written }))
+    end)
+
+    it("does not push back what it just pulled", function()
+        -- Writing the sidecar makes it newer than the state it came from, so
+        -- without the mark this bounces between the two sides forever.
+        local server_state = server("2026-07-27T10:00:00Z")
+        local after_pull = { modified_time = ReadingState.iso_to_epoch("2026-07-27T10:30:00Z") }
+        assert.are.equal("noop", ReadingState.plan(after_pull, server_state, {
+            applied_state_time = "2026-07-27T10:00:00Z",
+            pushed_local_time = after_pull.modified_time,
+        }))
+    end)
+
+    it("pushes a book the server has never heard of", function()
+        assert.are.equal("push", ReadingState.plan({ modified_time = 1000 }, nil, {}))
+    end)
+
+    it("does nothing without a local sidecar", function()
+        assert.are.equal("noop", ReadingState.plan(nil, nil, {}))
+    end)
+end)
