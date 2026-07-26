@@ -97,6 +97,8 @@ return {
         "Kobo Sync: o servidor tem um progresso mais recente (%1 %). Ir para lá?",
     ["Kobo Sync: “%1” is already on this device."] =
         "Kobo Sync: “%1” já está neste dispositivo.",
+    ["Last synced: %1"] =
+        "Última sincronização: %1",
     ["Matches book titles and series names."] =
         "Pesquisa em títulos de livros e nomes de séries.",
     ["Missing locally: %1"] =
@@ -149,12 +151,12 @@ return {
         "Sincroniza a biblioteca e o progresso de leitura com um servidor Kobo Sync auto-hospedado ",
     ["Text list"] =
         "Lista de texto",
-    ["Timestamps refreshed: %1"] =
-        "Carimbos de data/hora atualizados: %1",
     ["Upload reading progress when closing a book"] =
         "Enviar o progresso de leitura ao fechar um livro",
     ["cannot write to the cover cache"] =
         "não foi possível gravar no cache de capas",
+    ["never"] =
+        "nunca",
     ["no cover URL for this server"] =
         "nenhuma URL de capa para este servidor",
     ["the server took too long to respond"] =

@@ -97,6 +97,8 @@ return {
         "Kobo Sync: máy chủ có tiến độ đọc mới hơn (%1 %). Chuyển tới đó?",
     ["Kobo Sync: “%1” is already on this device."] =
         "Kobo Sync: “%1” đã có trên thiết bị này.",
+    ["Last synced: %1"] =
+        "Đồng bộ lần cuối: %1",
     ["Matches book titles and series names."] =
         "Tìm trong tên sách và tên bộ sách.",
     ["Missing locally: %1"] =
@@ -149,12 +151,12 @@ return {
         "Đồng bộ thư viện và tiến độ đọc với máy chủ Kobo Sync tự lưu trữ ",
     ["Text list"] =
         "Danh sách văn bản",
-    ["Timestamps refreshed: %1"] =
-        "Đã làm mới dấu thời gian: %1",
     ["Upload reading progress when closing a book"] =
         "Tải tiến độ đọc lên khi đóng sách",
     ["cannot write to the cover cache"] =
         "không ghi được vào bộ đệm bìa sách",
+    ["never"] =
+        "chưa bao giờ",
     ["no cover URL for this server"] =
         "không có URL bìa cho máy chủ này",
     ["the server took too long to respond"] =

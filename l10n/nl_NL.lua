@@ -97,6 +97,8 @@ return {
         "Kobo Sync: de server heeft nieuwere leesvoortgang (%1 %). Daarheen springen?",
     ["Kobo Sync: “%1” is already on this device."] =
         "Kobo Sync: “%1” staat al op dit apparaat.",
+    ["Last synced: %1"] =
+        "Laatst gesynchroniseerd: %1",
     ["Matches book titles and series names."] =
         "Zoekt in boektitels en reeksnamen.",
     ["Missing locally: %1"] =
@@ -149,12 +151,12 @@ return {
         "Synchroniseert bibliotheek en leesvoortgang met een zelfgehoste Kobo Sync-server ",
     ["Text list"] =
         "Tekstlijst",
-    ["Timestamps refreshed: %1"] =
-        "Tijdstempels bijgewerkt: %1",
     ["Upload reading progress when closing a book"] =
         "Leesvoortgang uploaden bij het sluiten van een boek",
     ["cannot write to the cover cache"] =
         "kan niet naar de omslagcache schrijven",
+    ["never"] =
+        "nooit",
     ["no cover URL for this server"] =
         "geen omslag-URL voor deze server",
     ["the server took too long to respond"] =

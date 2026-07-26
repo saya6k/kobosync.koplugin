@@ -102,6 +102,8 @@ function KoboSync:init()
     -- Minutes between unattended syncs; 0 is off.
     self.sync_interval = tonumber(self.settings:readSetting("sync_interval")) or 0
     self.sync_on_start = self.settings:isTrue("sync_on_start")
+    -- Epoch of the last sync that reached the end of the catalog; nil until one has.
+    self.last_sync = tonumber(self.settings:readSetting("last_sync"))
     self.image_url_template = self.settings:readSetting("image_url_template")
     -- "off" | "grid". A cover boxed by a list row stayed too small to be worth
     -- the fetch, so the list variant was dropped; anyone left on it, or on the
@@ -212,7 +214,15 @@ function KoboSync:saveSettings()
     self.settings:saveSetting("upload_on_close", self.upload_on_close)
     self.settings:saveSetting("sync_interval", self.sync_interval)
     self.settings:saveSetting("sync_on_start", self.sync_on_start)
+    self.settings:saveSetting("last_sync", self.last_sync)
     self.settings:flush()
+end
+
+function KoboSync:lastSyncText()
+    if not self.last_sync then
+        return _("never")
+    end
+    return os.date("%Y-%m-%d %H:%M", self.last_sync)
 end
 
 function KoboSync:getState()
@@ -348,6 +358,14 @@ function KoboSync:addToMainMenu(menu_items)
                 end,
             },
             {
+                -- Reads the in-memory setting, so opening the menu never
+                -- touches the catalog file.
+                text_func = function()
+                    return T(_("Last synced: %1"), self:lastSyncText())
+                end,
+                enabled_func = function() return false end,
+            },
+            {
                 text = _("Browse server library"),
                 enabled_func = function() return self.server_url ~= nil end,
                 callback = function()
@@ -440,6 +458,10 @@ function KoboSync:addToMainMenu(menu_items)
                             local state = self:getState()
                             state:reset()
                             state:save()
+                            -- The next sync is a full one, so there is no
+                            -- earlier one left to date.
+                            self.last_sync = nil
+                            self:saveSettings()
                             UIManager:show(InfoMessage:new{ text = _("Kobo Sync: state reset.") })
                         end,
                     })
@@ -554,6 +576,11 @@ function KoboSync:doSync(opts)
         return
     end
 
+    -- The catalog is complete at this point, so this is the moment the device
+    -- and the server agreed; downloads that follow do not change it.
+    self.last_sync = os.time()
+    self:saveSettings()
+
     Trapper:info(_("Kobo Sync: syncing reading progress…"))
     local pushed, pulled = self:applyReadingStates(state, api)
     state:save()
@@ -609,17 +636,14 @@ function KoboSync:reportSync(result, downloaded, failed, pushed, pulled, missing
     if failed > 0 then
         table.insert(lines, T(_("Failed downloads: %1"), failed))
     end
-    if result.touched > 0 then
-        -- Named for what it is: the server re-sent these with a new timestamp
-        -- and nothing else altered.
-        table.insert(lines, T(_("Timestamps refreshed: %1"), result.touched))
-    end
     if missing > 0 then
         table.insert(lines, T(_("Missing locally: %1"), missing))
     end
     if pushed > 0 or pulled > 0 then
         table.insert(lines, T(_("Reading progress: %1 sent, %2 received"), pushed, pulled))
     end
+    -- The sync as a whole has one timestamp, taken when the catalog finished.
+    table.insert(lines, T(_("Last synced: %1"), self:lastSyncText()))
     local text = table.concat(lines, "\n")
     if quiet then
         UIManager:show(Notification:new{ text = text:gsub("\n", "  ") })
