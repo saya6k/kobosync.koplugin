@@ -323,3 +323,50 @@ describe("SyncEngine.group_by_series", function()
         assert.are.equal(1, #standalone)
     end)
 end)
+
+describe("SyncEngine.filter_books", function()
+    local books = {
+        { uuid = "a", title = "Alpha", series_name = "First" },
+        { uuid = "b", title = "Beta", series_name = "Second", downloaded = true },
+        { uuid = "c", title = "가나다" },
+    }
+
+    local function uuids(list)
+        local out = {}
+        for _, b in ipairs(list) do table.insert(out, b.uuid) end
+        return out
+    end
+
+    it("returns everything when no filter is set", function()
+        assert.are.same({ "a", "b", "c" }, uuids(SyncEngine.filter_books(books)))
+        assert.are.same({ "a", "b", "c" }, uuids(SyncEngine.filter_books(books, { query = "" })))
+    end)
+
+    it("matches the title case-insensitively", function()
+        assert.are.same({ "a" }, uuids(SyncEngine.filter_books(books, { query = "alp" })))
+        assert.are.same({ "a" }, uuids(SyncEngine.filter_books(books, { query = "ALP" })))
+    end)
+
+    it("matches the series name", function()
+        assert.are.same({ "b" }, uuids(SyncEngine.filter_books(books, { query = "second" })))
+    end)
+
+    it("matches multi-byte titles literally", function()
+        assert.are.same({ "c" }, uuids(SyncEngine.filter_books(books, { query = "가나" })))
+    end)
+
+    it("treats the query as plain text, not a Lua pattern", function()
+        local patterned = { { uuid = "p", title = "a.c" }, { uuid = "q", title = "abc" } }
+        assert.are.same({ "p" }, uuids(SyncEngine.filter_books(patterned, { query = "a.c" })))
+    end)
+
+    it("keeps only downloaded books when asked", function()
+        assert.are.same({ "b" }, uuids(SyncEngine.filter_books(books, { downloaded_only = true })))
+    end)
+
+    it("combines query and downloaded filter", function()
+        assert.are.same({}, uuids(SyncEngine.filter_books(books, {
+            query = "alpha", downloaded_only = true,
+        })))
+    end)
+end)
