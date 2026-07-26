@@ -7,7 +7,6 @@ local InfoMessage = require("ui/widget/infomessage")
 local InputDialog = require("ui/widget/inputdialog")
 local LuaSettings = require("luasettings")
 local NetworkMgr = require("ui/network/manager")
-local Notification = require("ui/widget/notification")
 local Trapper = require("ui/trapper")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -28,6 +27,7 @@ local KoboApi = require("koboapi")
 local ReadingState = require("readingstate")
 local StateStore = require("statestore")
 local SyncEngine = require("syncengine")
+local SyncIndicator = require("syncindicator")
 local Wire = require("wire")
 
 -- Ask before bulk downloads (first sync, or mass changes later).
@@ -192,6 +192,22 @@ function KoboSync:runInSubprocessNonModal(task)
     end
 end
 
+-- A message in the corner for as long as the walk runs. A toast would say the
+-- same thing but vanish after a couple of seconds, leaving no sign that
+-- anything is still going on.
+function KoboSync:showSyncIndicator(text)
+    self:hideSyncIndicator()
+    self.sync_indicator = SyncIndicator:new{ text = text }
+    UIManager:show(self.sync_indicator)
+end
+
+function KoboSync:hideSyncIndicator()
+    if self.sync_indicator then
+        UIManager:close(self.sync_indicator)
+        self.sync_indicator = nil
+    end
+end
+
 function KoboSync:syncRequest(req)
     local output, err = self:runInSubprocessNonModal(function()
         return Wire.encode(http_request(req))
@@ -219,7 +235,9 @@ function KoboSync:addToMainMenu(menu_items)
         sub_item_table = {
             {
                 text = _("Synchronize now"),
-                enabled_func = function() return self.server_url ~= nil end,
+                enabled_func = function()
+                    return self.server_url ~= nil and not self.syncing
+                end,
                 callback = function() self:onKoboSyncSync() end,
             },
             {
@@ -352,6 +370,7 @@ function KoboSync:onKoboSyncSync()
             self.syncing = true
             local ok, err = pcall(function() self:doSync() end)
             self.syncing = false
+            self:hideSyncIndicator()
             if not ok then
                 logger.warn("KoboSync: sync failed:", err)
                 UIManager:show(InfoMessage:new{
@@ -373,15 +392,11 @@ function KoboSync:doSync()
     -- The protocol sends no total, so progress counts up rather than filling a
     -- bar: a response advertises a sync token and whether more pages follow,
     -- nothing more.
-    UIManager:show(Notification:new{ text = _("Kobo Sync: synchronizing…") })
+    self:showSyncIndicator(_("Kobo Sync: synchronizing…"))
     local token, err, partial_token = api:sync(state:get_synctoken(), function(items, page)
         SyncEngine.process_items(state, items, result)
         seen = seen + #items
-        -- A toast rather than a dialog: it neither covers the page being read
-        -- nor swallows taps meant for it.
-        UIManager:show(Notification:new{
-            text = T(_("Kobo Sync: %1 items, page %2…"), seen, page),
-        })
+        self:showSyncIndicator(T(_("Kobo Sync: %1 items, page %2…"), seen, page))
         if self.sync_cancelled then
             return false
         end
