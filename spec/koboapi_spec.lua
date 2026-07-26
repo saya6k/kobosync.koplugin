@@ -202,3 +202,73 @@ describe("KoboApi.get_initialization", function()
         assert.are.equal("https://s/{ImageId}", init.Resources.image_url_template)
     end)
 end)
+
+describe("KoboApi.sync retries", function()
+    -- Retries are driven by an injected sleep so the suite never waits.
+    local function api_with_retries(responses)
+        local request, calls = fake_http(responses)
+        local slept = {}
+        local api = KoboApi.new{
+            base_url = "https://example.com/kobo/token123/",
+            request = request,
+            json = json,
+            retry_delays = { 1, 2 },
+            sleep = function(seconds) table.insert(slept, seconds) end,
+        }
+        return api, calls, slept
+    end
+
+    it("retries a transport failure and succeeds", function()
+        local api, calls, slept = api_with_retries({
+            function() return nil, "Connection timed out" end,
+            { code = 200, headers = { ["x-kobo-synctoken"] = "t1" }, body = "[]" },
+        })
+        local token = api:sync(nil, function() end)
+        assert.are.equal("t1", token)
+        assert.are.equal(2, #calls)
+        assert.are.same({ 1 }, slept)
+    end)
+
+    it("gives up after the last delay and reports the transport error", function()
+        local api, calls, slept = api_with_retries({
+            function() return nil, "Connection timed out" end,
+        })
+        local token, err = api:sync(nil, function() end)
+        assert.is_nil(token)
+        assert.are.equal("Connection timed out", err)
+        assert.are.equal(3, #calls) -- first try plus two retries
+        assert.are.same({ 1, 2 }, slept)
+    end)
+
+    it("retries a server error but not a client error", function()
+        local api, calls = api_with_retries({ { code = 503, headers = {}, body = "" } })
+        local _, err = api:sync(nil, function() end)
+        assert.are.equal("HTTP 503", err)
+        assert.are.equal(3, #calls)
+
+        local api2, calls2 = api_with_retries({ { code = 401, headers = {}, body = "" } })
+        local _, err2 = api2:sync(nil, function() end)
+        assert.are.equal("HTTP 401", err2)
+        assert.are.equal(1, #calls2)
+    end)
+
+    it("keeps the token of the pages that did get through", function()
+        local api = api_with_retries({
+            { code = 200, headers = { ["x-kobo-synctoken"] = "t1", ["x-kobo-sync"] = "continue" }, body = "[]" },
+            function() return nil, "Connection timed out" end,
+        })
+        local token, err, partial = api:sync(nil, function() end)
+        assert.is_nil(token)
+        assert.are.equal("Connection timed out", err)
+        assert.are.equal("t1", partial)
+    end)
+
+    it("does not sleep when nothing fails", function()
+        local api, calls, slept = api_with_retries({
+            { code = 200, headers = { ["x-kobo-synctoken"] = "t1" }, body = "[]" },
+        })
+        api:sync(nil, function() end)
+        assert.are.equal(1, #calls)
+        assert.are.equal(0, #slept)
+    end)
+end)
