@@ -21,6 +21,8 @@ return {
         "Elimina",
     ["Download"] =
         "Scarica",
+    ["Download all %1 books"] =
+        "Scarica tutti i %1 libri",
     ["Download folder: %1"] =
         "Cartella di download: %1",
     ["Downloaded: %1"] =
@@ -31,6 +33,8 @@ return {
         "Ogni %1 minuti",
     ["Failed downloads: %1"] =
         "Download non riusciti: %1",
+    ["Failed: %1"] =
+        "Non riusciti: %1",
     ["Full Kobo Sync prefix including the personal token, as shown by your server (calibre-web: Profile → Kobo Sync Token)."] =
         "Prefisso Kobo Sync completo, token personale incluso, come indicato dal server (calibre-web: Profilo → Token Kobo Sync).",
     ["Grid columns: %1"] =
@@ -57,10 +61,14 @@ return {
         "Kobo Sync fermato.\nNuovi: %1  Modificati: %2\n\nLa prossima sincronizzazione riprenderà da qui.",
     ["Kobo Sync: %1 book(s) were removed on the server. Delete the local files?\n\n%2"] =
         "Kobo Sync: %1 libro/i sono stati rimossi sul server. Eliminare i file locali?\n\n%2",
+    ["Kobo Sync: %1 downloaded."] =
+        "Kobo Sync: %1 scaricati.",
     ["Kobo Sync: %1 items, page %2…"] =
         "Kobo Sync: %1 elementi, pagina %2…",
     ["Kobo Sync: already synchronizing."] =
         "Kobo Sync: sincronizzazione già in corso.",
+    ["Kobo Sync: download %1 book(s) from “%2”?\n\n%3"] =
+        "Kobo Sync: scaricare %1 libro/i da «%2»?\n\n%3",
     ["Kobo Sync: download %1 book(s) to this device now?"] =
         "Kobo Sync: scaricare %1 libro/i su questo dispositivo ora?",
     ["Kobo Sync: download failed: %1"] =
@@ -69,12 +77,8 @@ return {
         "Kobo Sync: download in corso\n%1",
     ["Kobo Sync: downloading %1 of %2\n%3\n\nTap to cancel."] =
         "Kobo Sync: download %1 di %2\n%3\n\nTocca per annullare.",
-    ["Kobo Sync: fetching cover…"] =
-        "Kobo Sync: recupero della copertina…",
     ["Kobo Sync: forget the sync state and catalog?\nDownloaded files are kept. The next synchronization will be a full one."] =
         "Kobo Sync: dimenticare lo stato di sincronizzazione e il catalogo?\nI file scaricati vengono mantenuti. La prossima sincronizzazione sarà completa.",
-    ["Kobo Sync: no cover (%1)"] =
-        "Kobo Sync: nessuna copertina (%1)",
     ["Kobo Sync: no downloadable format for this book."] =
         "Kobo Sync: nessun formato scaricabile per questo libro.",
     ["Kobo Sync: set the server URL first."] =
@@ -91,6 +95,8 @@ return {
         "Kobo Sync: sincronizzazione dei progressi di lettura…",
     ["Kobo Sync: the server has newer reading progress (%1%). Jump there?"] =
         "Kobo Sync: il server ha progressi più recenti (%1 %). Andare lì?",
+    ["Kobo Sync: “%1” is already on this device."] =
+        "Kobo Sync: «%1» è già su questo dispositivo.",
     ["Matches book titles and series names."] =
         "Cerca nei titoli dei libri e nei nomi delle serie.",
     ["Missing locally: %1"] =

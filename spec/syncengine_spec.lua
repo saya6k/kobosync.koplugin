@@ -538,3 +538,61 @@ describe("SyncEngine.process_items metadata capture", function()
         assert.are.equal("2026-07-24T00:00:00Z", book.metadata.created)
     end)
 end)
+
+describe("SyncEngine.plan_books", function()
+    local function book(uuid, opts)
+        opts = opts or {}
+        return {
+            uuid = uuid,
+            title = opts.title or uuid,
+            revision_id = opts.revision or uuid,
+            downloaded = opts.downloaded,
+            downloaded_revision = opts.downloaded_revision,
+            downloaded_size = opts.downloaded_size,
+            download_urls = opts.urls or {
+                { Format = "KEPUB", Url = "https://s/" .. uuid, Size = opts.size or 1000 },
+            },
+        }
+    end
+
+    local function uuids(plan)
+        local out = {}
+        for _idx, item in ipairs(plan) do table.insert(out, item.uuid) end
+        return out
+    end
+
+    it("plans everything not on the device, whatever the download mode says", function()
+        -- plan_downloads would skip these in on_demand mode; asking by hand is
+        -- the decision that mode would otherwise make.
+        assert.are.same({ "a", "b" }, uuids(SyncEngine.plan_books{ book("a"), book("b") }))
+    end)
+
+    it("keeps the order it was given, so chapters arrive in reading order", function()
+        assert.are.same({ "c3", "c1", "c2" },
+            uuids(SyncEngine.plan_books{ book("c3"), book("c1"), book("c2") }))
+    end)
+
+    it("skips a book already on the device", function()
+        local downloaded = book("a", { downloaded = true, downloaded_revision = "a", downloaded_size = 1000 })
+        assert.are.equal(0, #SyncEngine.plan_books{ downloaded })
+    end)
+
+    it("re-plans a downloaded book whose file the server replaced", function()
+        local stale = book("a", { downloaded = true, downloaded_revision = "a", downloaded_size = 999 })
+        local plan = SyncEngine.plan_books{ stale }
+        assert.are.equal(1, #plan)
+        assert.is_true(plan[1].redownload)
+    end)
+
+    it("skips a book with no downloadable format", function()
+        assert.are.equal(0, #SyncEngine.plan_books{
+            book("a", { urls = { { Format = "PDF", Url = "u" } } }),
+        })
+    end)
+
+    it("adds up what the plan will pull down", function()
+        local plan = SyncEngine.plan_books{ book("a", { size = 100 }), book("b", { size = 250 }) }
+        assert.are.equal(350, SyncEngine.plan_size(plan))
+        assert.are.equal(0, SyncEngine.plan_size({}))
+    end)
+end)

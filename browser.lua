@@ -1,12 +1,13 @@
 -- Server library browser: lists the synced catalog grouped by series, downloads
 -- a book on tap (when not yet on the device) and opens it in the reader.
 local ButtonDialog = require("ui/widget/buttondialog")
+local ConfirmBox = require("ui/widget/confirmbox")
 local InfoMessage = require("ui/widget/infomessage")
-local ImageViewer = require("ui/widget/imageviewer")
 local InputDialog = require("ui/widget/inputdialog")
 local CoverMenu = require("covermenu")
 local Menu = require("ui/widget/menu")
 local NetworkMgr = require("ui/network/manager")
+local Trapper = require("ui/trapper")
 local UIManager = require("ui/uimanager")
 local lfs = require("libs/libkoreader-lfs")
 local util = require("util")
@@ -35,12 +36,14 @@ local function item_mandatory(book)
     return ""
 end
 
-local function book_item(plugin, menu, book, text)
+-- `group` is the series the book belongs to, when it has one. Both fields are
+-- read back by onMenuHold, which only receives the item table entry.
+local function book_item(plugin, menu, book, text, group)
     return {
         text = text,
         mandatory = item_mandatory(book),
-        -- Read back by onMenuHold, which only receives the item table entry.
         kobosync_book = book,
+        kobosync_group = group,
         callback = function()
             Browser.openBook(plugin, menu, book)
         end,
@@ -69,12 +72,28 @@ local show_top
 local function show_series(plugin, menu, group)
     table.insert(menu.paths, group.name)
     local items = {}
+    -- Above the first chapter, so the whole series can be taken without
+    -- hunting for the hold gesture.
+    local pending = SyncEngine.plan_books(group.books)
+    if #pending > 0 then
+        table.insert(items, {
+            text = T(_("Download all %1 books"), #pending),
+            mandatory = util.getFriendlySize(SyncEngine.plan_size(pending)),
+            callback = function()
+                Browser.downloadBooks(plugin, menu, group.books, group.name, function()
+                    -- Back to this series, not the top: that is where the user is.
+                    table.remove(menu.paths)
+                    show_series(plugin, menu, group)
+                end)
+            end,
+        })
+    end
     for _idx, book in ipairs(group.books) do
         table.insert(items, book_item(plugin, menu, book,
-            SyncEngine.short_title(book.title, group.name)))
+            SyncEngine.short_title(book.title, group.name), group))
     end
     menu:switchItemTable(group.name, items, 1, nil,
-        T(_("%1 books"), #items) .. filter_note(menu))
+        T(_("%1 books"), #group.books) .. filter_note(menu))
 end
 
 -- Search results are flat: grouping a handful of hits behind series rows would
@@ -86,7 +105,7 @@ local function show_search_results(plugin, menu)
     for _gidx, group in ipairs(groups) do
         for _bidx, book in ipairs(group.books) do
             table.insert(items, book_item(plugin, menu, book,
-                group.name .. " · " .. SyncEngine.short_title(book.title, group.name)))
+                group.name .. " · " .. SyncEngine.short_title(book.title, group.name), group))
         end
     end
     for _idx, book in ipairs(standalone) do
@@ -110,8 +129,8 @@ local function show_series_list(plugin, menu)
         table.insert(items, {
             text = group.name,
             mandatory = string.format("%d/%d", group.downloaded, #group.books),
-            -- Hold on a series shows the first chapter's cover.
-            kobosync_book = group.books[1],
+            -- Held to download the whole series; see onMenuHold.
+            kobosync_group = group,
             callback = function()
                 show_series(plugin, menu, group)
             end,
@@ -288,36 +307,56 @@ function Browser.show(plugin)
         show_filter_menu(plugin, menu)
     end
     menu.onMenuHold = function(_self, item)
-        Browser.showCover(plugin, item and item.kobosync_book)
+        if not item then return true end
+        local group = item.kobosync_group
+        if group then
+            Browser.downloadBooks(plugin, menu, group.books, group.name,
+                function() show_top(plugin, menu) end)
+        elseif item.kobosync_book then
+            -- A book outside any series: the row stands only for itself.
+            local book = item.kobosync_book
+            Browser.downloadBooks(plugin, menu, { book }, book.title or "",
+                function() show_top(plugin, menu) end)
+        end
         return true
     end
     UIManager:show(menu)
     show_top(plugin, menu)
 end
 
--- Hold on a row: fetch the server-side cover and show it. Covers only exist for
--- books synced since the plugin started recording CoverImageId.
-function Browser.showCover(plugin, book)
-    if not book then return end
-    NetworkMgr:runWhenOnline(function()
-        local info = InfoMessage:new{ text = _("Kobo Sync: fetching cover…") }
-        UIManager:show(info)
-        UIManager:forceRePaint()
-        local path, err = plugin:fetchCover(plugin:getApi(), book)
-        UIManager:close(info)
-        if not path then
-            UIManager:show(InfoMessage:new{
-                text = T(_("Kobo Sync: no cover (%1)"), err or _("unknown error")),
-            })
-            return
-        end
-        UIManager:show(ImageViewer:new{
-            file = path,
-            fullscreen = true,
-            with_title_bar = true,
-            title_text = book.title or "",
+-- Downloads a set of books chosen by hand -- a whole series, or the one book a
+-- row stands for when it belongs to none. The download mode is not consulted:
+-- asking for these is the decision it would otherwise be making.
+function Browser.downloadBooks(plugin, menu, books, label, refresh)
+    local plan = SyncEngine.plan_books(books)
+    if #plan == 0 then
+        UIManager:show(InfoMessage:new{
+            text = T(_("Kobo Sync: “%1” is already on this device."), label),
         })
-    end)
+        return
+    end
+    UIManager:show(ConfirmBox:new{
+        text = T(_("Kobo Sync: download %1 book(s) from “%2”?\n\n%3"),
+            #plan, label, util.getFriendlySize(SyncEngine.plan_size(plan))),
+        ok_text = _("Download"),
+        ok_callback = function()
+            NetworkMgr:runWhenOnline(function()
+                Trapper:wrap(function()
+                    local state = plugin:getState()
+                    local downloaded, failed =
+                        plugin:downloadPlanned(state, plugin:getApi(), plan)
+                    state:save()
+                    local text = T(_("Kobo Sync: %1 downloaded."), downloaded)
+                    if failed > 0 then
+                        text = text .. "\n" .. T(_("Failed: %1"), failed)
+                    end
+                    UIManager:show(InfoMessage:new{ text = text })
+                    -- Redraw so the ticks and the series counts catch up.
+                    if refresh then refresh() end
+                end)
+            end)
+        end,
+    })
 end
 
 function Browser.openBook(plugin, menu, book)

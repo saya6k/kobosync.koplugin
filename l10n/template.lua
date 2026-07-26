@@ -21,6 +21,8 @@ return {
         "Delete",
     ["Download"] =
         "Download",
+    ["Download all %1 books"] =
+        "Download all %1 books",
     ["Download folder: %1"] =
         "Download folder: %1",
     ["Downloaded: %1"] =
@@ -31,6 +33,8 @@ return {
         "Every %1 minutes",
     ["Failed downloads: %1"] =
         "Failed downloads: %1",
+    ["Failed: %1"] =
+        "Failed: %1",
     ["Full Kobo Sync prefix including the personal token, as shown by your server (calibre-web: Profile → Kobo Sync Token)."] =
         "Full Kobo Sync prefix including the personal token, as shown by your server (calibre-web: Profile → Kobo Sync Token).",
     ["Grid columns: %1"] =
@@ -57,10 +61,14 @@ return {
         "Kobo Sync stopped.\nNew: %1  Changed: %2\n\nThe next sync resumes from here.",
     ["Kobo Sync: %1 book(s) were removed on the server. Delete the local files?\n\n%2"] =
         "Kobo Sync: %1 book(s) were removed on the server. Delete the local files?\n\n%2",
+    ["Kobo Sync: %1 downloaded."] =
+        "Kobo Sync: %1 downloaded.",
     ["Kobo Sync: %1 items, page %2…"] =
         "Kobo Sync: %1 items, page %2…",
     ["Kobo Sync: already synchronizing."] =
         "Kobo Sync: already synchronizing.",
+    ["Kobo Sync: download %1 book(s) from “%2”?\n\n%3"] =
+        "Kobo Sync: download %1 book(s) from “%2”?\n\n%3",
     ["Kobo Sync: download %1 book(s) to this device now?"] =
         "Kobo Sync: download %1 book(s) to this device now?",
     ["Kobo Sync: download failed: %1"] =
@@ -69,12 +77,8 @@ return {
         "Kobo Sync: downloading\n%1",
     ["Kobo Sync: downloading %1 of %2\n%3\n\nTap to cancel."] =
         "Kobo Sync: downloading %1 of %2\n%3\n\nTap to cancel.",
-    ["Kobo Sync: fetching cover…"] =
-        "Kobo Sync: fetching cover…",
     ["Kobo Sync: forget the sync state and catalog?\nDownloaded files are kept. The next synchronization will be a full one."] =
         "Kobo Sync: forget the sync state and catalog?\nDownloaded files are kept. The next synchronization will be a full one.",
-    ["Kobo Sync: no cover (%1)"] =
-        "Kobo Sync: no cover (%1)",
     ["Kobo Sync: no downloadable format for this book."] =
         "Kobo Sync: no downloadable format for this book.",
     ["Kobo Sync: set the server URL first."] =
@@ -91,6 +95,8 @@ return {
         "Kobo Sync: syncing reading progress…",
     ["Kobo Sync: the server has newer reading progress (%1%). Jump there?"] =
         "Kobo Sync: the server has newer reading progress (%1%). Jump there?",
+    ["Kobo Sync: “%1” is already on this device."] =
+        "Kobo Sync: “%1” is already on this device.",
     ["Matches book titles and series names."] =
         "Matches book titles and series names.",
     ["Missing locally: %1"] =
