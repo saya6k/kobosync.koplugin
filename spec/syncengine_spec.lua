@@ -443,3 +443,98 @@ describe("SyncEngine.reconcile_downloads", function()
         assert.are.equal("u1", plan[1].uuid)
     end)
 end)
+
+describe("SyncEngine cover urls", function()
+    it("reads the template out of the Resources object", function()
+        assert.are.equal("https://s/{ImageId}/{Width}/{Height}/false/image.jpg",
+            SyncEngine.image_url_template({ Resources = {
+                image_url_template = "https://s/{ImageId}/{Width}/{Height}/false/image.jpg",
+            } }))
+    end)
+
+    it("returns nil when the response carries no template", function()
+        assert.is_nil(SyncEngine.image_url_template(nil))
+        assert.is_nil(SyncEngine.image_url_template({}))
+        assert.is_nil(SyncEngine.image_url_template({ Resources = {} }))
+        assert.is_nil(SyncEngine.image_url_template({ Resources = { image_url_template = "" } }))
+    end)
+
+    it("builds a fallback template from the sync prefix", function()
+        assert.are.equal("https://s/kobo/tok/{ImageId}/{Width}/{Height}/false/image.jpg",
+            SyncEngine.default_image_url_template("https://s/kobo/tok/"))
+        assert.is_nil(SyncEngine.default_image_url_template(nil))
+    end)
+
+    it("fills id and size into the template", function()
+        local t = "https://s/{ImageId}/{Width}/{Height}/false/image.jpg"
+        assert.are.equal("https://s/abc/300/450/false/image.jpg",
+            SyncEngine.cover_url(t, "abc", 300, 450))
+    end)
+
+    it("does not read a percent in the id as a capture reference", function()
+        local t = "https://s/{ImageId}/x.jpg"
+        assert.are.equal("https://s/a%1b/x.jpg", SyncEngine.cover_url(t, "a%1b"))
+    end)
+
+    it("returns nil without a template or an id", function()
+        assert.is_nil(SyncEngine.cover_url(nil, "abc", 1, 1))
+        assert.is_nil(SyncEngine.cover_url("https://s/{ImageId}", nil, 1, 1))
+        assert.is_nil(SyncEngine.cover_url("https://s/{ImageId}", "", 1, 1))
+    end)
+end)
+
+describe("SyncEngine.extra_metadata", function()
+    it("flattens the publisher and keeps the entitlement timestamps", function()
+        local meta = SyncEngine.extra_metadata(
+            { Publisher = { Name = "P", Imprint = "I" }, Language = "ko" },
+            { Created = "2026-07-24T02:08:33Z", Status = "Active" })
+        assert.are.equal("P", meta.publisher)
+        assert.are.equal("I", meta.imprint)
+        assert.are.equal("ko", meta.language)
+        assert.are.equal("2026-07-24T02:08:33Z", meta.created)
+        assert.are.equal("Active", meta.status)
+    end)
+
+    it("drops empty strings so they do not pad the catalog", function()
+        local meta = SyncEngine.extra_metadata({ Subtitle = "", Language = "ko" }, {})
+        assert.is_nil(meta.subtitle)
+        assert.are.equal("ko", meta.language)
+    end)
+
+    it("keeps false flags, which are meaningful", function()
+        local meta = SyncEngine.extra_metadata({}, { IsLocked = false })
+        assert.is_false(meta.is_locked)
+    end)
+
+    it("returns nil when there is nothing to keep", function()
+        assert.is_nil(SyncEngine.extra_metadata({}, {}))
+        assert.is_nil(SyncEngine.extra_metadata(nil, nil))
+    end)
+
+    it("falls back to the entitlement's cross revision id", function()
+        assert.are.equal("x", SyncEngine.extra_metadata({}, { CrossRevisionId = "x" }).cross_revision_id)
+    end)
+end)
+
+describe("SyncEngine.process_items metadata capture", function()
+    it("stores the cover id, series id and the metadata sub-table", function()
+        local store = new_store()
+        SyncEngine.process_items(store, {
+            { NewEntitlement = {
+                BookEntitlement = { Id = "u1", RevisionId = "r1", Created = "2026-07-24T00:00:00Z" },
+                BookMetadata = {
+                    EntitlementId = "u1",
+                    Title = "T",
+                    CoverImageId = "cover-1",
+                    Series = { Name = "S", Number = 3, Id = "series-1" },
+                    Language = "ko",
+                },
+            } },
+        }, SyncEngine.new_result())
+        local book = store:get_book("u1")
+        assert.are.equal("cover-1", book.cover_id)
+        assert.are.equal("series-1", book.series_id)
+        assert.are.equal("ko", book.metadata.language)
+        assert.are.equal("2026-07-24T00:00:00Z", book.metadata.created)
+    end)
+end)

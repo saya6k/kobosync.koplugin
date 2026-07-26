@@ -2,6 +2,7 @@
 -- a book on tap (when not yet on the device) and opens it in the reader.
 local ButtonDialog = require("ui/widget/buttondialog")
 local InfoMessage = require("ui/widget/infomessage")
+local ImageViewer = require("ui/widget/imageviewer")
 local InputDialog = require("ui/widget/inputdialog")
 local Menu = require("ui/widget/menu")
 local NetworkMgr = require("ui/network/manager")
@@ -37,6 +38,8 @@ local function book_item(plugin, menu, book, text)
     return {
         text = text,
         mandatory = item_mandatory(book),
+        -- Read back by onMenuHold, which only receives the item table entry.
+        kobosync_book = book,
         callback = function()
             Browser.openBook(plugin, menu, book)
         end,
@@ -106,6 +109,8 @@ local function show_series_list(plugin, menu)
         table.insert(items, {
             text = group.name,
             mandatory = string.format("%d/%d", group.downloaded, #group.books),
+            -- Hold on a series shows the first chapter's cover.
+            kobosync_book = group.books[1],
             callback = function()
                 show_series(plugin, menu, group)
             end,
@@ -201,8 +206,37 @@ function Browser.show(plugin)
     menu.onLeftButtonTap = function()
         show_filter_menu(plugin, menu)
     end
+    menu.onMenuHold = function(_self, item)
+        Browser.showCover(plugin, item and item.kobosync_book)
+        return true
+    end
     UIManager:show(menu)
     show_top(plugin, menu)
+end
+
+-- Hold on a row: fetch the server-side cover and show it. Covers only exist for
+-- books synced since the plugin started recording CoverImageId.
+function Browser.showCover(plugin, book)
+    if not book then return end
+    NetworkMgr:runWhenOnline(function()
+        local info = InfoMessage:new{ text = _("Kobo Sync: fetching cover…") }
+        UIManager:show(info)
+        UIManager:forceRePaint()
+        local path, err = plugin:fetchCover(plugin:getApi(), book)
+        UIManager:close(info)
+        if not path then
+            UIManager:show(InfoMessage:new{
+                text = T(_("Kobo Sync: no cover (%1)"), err or _("unknown error")),
+            })
+            return
+        end
+        UIManager:show(ImageViewer:new{
+            file = path,
+            fullscreen = true,
+            with_title_bar = true,
+            title_text = book.title or "",
+        })
+    end)
 end
 
 function Browser.openBook(plugin, menu, book)

@@ -31,6 +31,61 @@ local function entitlement_uuid(e)
     return nil
 end
 
+-- Everything else a sync item carries, in one sub-table so features added later
+-- need no re-sync -- a full one costs minutes on a large library.
+--
+-- Measured against a live calibre-web library, `categories` and `genre` hold
+-- the same placeholder uuid for every book, and the store fields (price, love,
+-- social, pre-order) are constants. They are kept anyway: that reading comes
+-- from one server, and another implementation of the protocol may well fill
+-- them properly. The whole sub-table costs roughly 190 bytes per book beyond
+-- the fields the plugin actually reads today.
+--
+-- Nested rather than flattened onto the entry: StateStore:list_books() shallow
+-- copies every field of every book on each call, and the browser calls it per
+-- render, so one table reference is cheaper than two dozen scalars.
+--
+-- Only the fields the plugin reads directly (title, author, series, download
+-- urls, revision, cover) stay on the entry itself; everything else lives here.
+function SyncEngine.extra_metadata(bm, be)
+    bm, be = bm or {}, be or {}
+    local publisher = type(bm.Publisher) == "table" and bm.Publisher or {}
+    local meta = {
+        subtitle = bm.Subtitle,
+        description = bm.Description,
+        language = bm.Language,
+        publisher = publisher.Name,
+        imprint = publisher.Imprint,
+        publication_date = bm.PublicationDate,
+        contributor_roles = bm.ContributorRoles,
+        work_id = bm.WorkId,
+        cross_revision_id = bm.CrossRevisionId or be.CrossRevisionId,
+        categories = bm.Categories,
+        genre = bm.Genre,
+        external_ids = bm.ExternalIds,
+        phonetic_pronunciations = bm.PhoneticPronunciations,
+        is_internet_archive = bm.IsInternetArchive,
+        is_pre_order = bm.IsPreOrder,
+        is_social_enabled = bm.IsSocialEnabled,
+        is_eligible_for_kobo_love = bm.IsEligibleForKoboLove,
+        current_display_price = bm.CurrentDisplayPrice,
+        current_love_display_price = bm.CurrentLoveDisplayPrice,
+        -- When the book entered the library: the only field that supports a
+        -- "recently added" ordering, since LastModified also moves on edits.
+        created = be.Created,
+        active_period = be.ActivePeriod,
+        status = be.Status,
+        origin_category = be.OriginCategory,
+        accessibility = be.Accessibility,
+        is_hidden_from_archive = be.IsHiddenFromArchive,
+        is_locked = be.IsLocked,
+    }
+    for key, value in pairs(meta) do
+        if value == "" then meta[key] = nil end
+    end
+    return next(meta) and meta or nil
+end
+
 local function process_entitlement(store, e, is_new, result)
     local uuid = entitlement_uuid(e)
     if not uuid then return end
@@ -57,11 +112,14 @@ local function process_entitlement(store, e, is_new, result)
         download_urls = bm.DownloadUrls,
         revision_id = bm.RevisionId or be.RevisionId,
         last_modified = be.LastModified,
+        cover_id = bm.CoverImageId,
     }
     if type(bm.Series) == "table" then
         fields.series_name = bm.Series.Name
         fields.series_number = bm.Series.NumberFloat or bm.Series.Number
+        fields.series_id = bm.Series.Id
     end
+    fields.metadata = SyncEngine.extra_metadata(bm, be)
     if e.ReadingState then
         fields.server_state = e.ReadingState
     end
@@ -230,6 +288,36 @@ function SyncEngine.group_by_series(books)
     table.sort(groups, function(a, b) return a.name < b.name end)
     table.sort(standalone, function(a, b) return (a.title or "") < (b.title or "") end)
     return groups, standalone
+end
+
+-- Pulls the cover URL template out of a /v1/initialization response. Kobo nests
+-- its resource URLs under a Resources object.
+function SyncEngine.image_url_template(init_response)
+    local resources = init_response and init_response.Resources
+    local template = resources and resources.image_url_template
+    if type(template) == "string" and template ~= "" then
+        return template
+    end
+    return nil
+end
+
+-- Fallback for servers that do not answer /v1/initialization: calibre-web
+-- serves covers under the sync prefix in the same shape Kobo advertises.
+function SyncEngine.default_image_url_template(base_url)
+    if not base_url or base_url == "" then return nil end
+    return (base_url:gsub("/+$", "")) .. "/{ImageId}/{Width}/{Height}/false/image.jpg"
+end
+
+-- Fills a cover template. calibre-web ignores the requested size and returns
+-- its stored thumbnail, but Kobo's own servers honour it, so the values are
+-- passed through rather than hardcoded. Replacements go through functions so a
+-- "%" in an id is never read as a capture reference.
+function SyncEngine.cover_url(template, image_id, width, height)
+    if not template or not image_id or image_id == "" then return nil end
+    local url = template:gsub("{ImageId}", function() return image_id end)
+    url = url:gsub("{Width}", function() return tostring(width) end)
+    url = url:gsub("{Height}", function() return tostring(height) end)
+    return url
 end
 
 -- Narrows a catalog listing before it is grouped for display. `query` matches
