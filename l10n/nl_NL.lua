@@ -43,8 +43,8 @@ return {
         "Ga",
     ["Keep"] =
         "Behouden",
-    ["Keep every book on this device"] =
-        "Elk boek op dit apparaat houden",
+    ["Keep every book on this device: %1"] =
+        "Elk boek op dit apparaat houden: %1",
     ["Kobo Sync"] =
         "Kobo Sync",
     ["Kobo Sync failed: %1"] =
@@ -107,6 +107,8 @@ return {
         "Niet nu",
     ["Off"] =
         "Uit",
+    ["On"] =
+        "Aan",
     ["Reading progress: %1 sent, %2 received"] =
         "Leesvoortgang: %1 verzonden, %2 ontvangen",
     ["Reset"] =
@@ -143,16 +145,16 @@ return {
         "Automatisch synchroniseren: elke %1 minuten",
     ["Sync automatically: off"] =
         "Automatisch synchroniseren: uit",
-    ["Sync when KOReader starts"] =
-        "Synchroniseren bij starten van KOReader",
+    ["Sync when KOReader starts: %1"] =
+        "Synchroniseren bij starten van KOReader: %1",
     ["Synchronize now"] =
         "Nu synchroniseren",
     ["Synchronizes library and reading progress with a self-hosted Kobo Sync server "] =
         "Synchroniseert bibliotheek en leesvoortgang met een zelfgehoste Kobo Sync-server ",
     ["Text list"] =
         "Tekstlijst",
-    ["Upload reading progress when closing a book"] =
-        "Leesvoortgang uploaden bij het sluiten van een boek",
+    ["Upload reading progress when closing a book: %1"] =
+        "Leesvoortgang uploaden bij het sluiten van een boek: %1",
     ["cannot write to the cover cache"] =
         "kan niet naar de omslagcache schrijven",
     ["never"] =

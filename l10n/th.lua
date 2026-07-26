@@ -43,8 +43,8 @@ return {
         "ไปที่นั่น",
     ["Keep"] =
         "เก็บไว้",
-    ["Keep every book on this device"] =
-        "เก็บหนังสือทุกเล่มไว้ในเครื่องนี้",
+    ["Keep every book on this device: %1"] =
+        "เก็บหนังสือทุกเล่มไว้ในเครื่องนี้: %1",
     ["Kobo Sync"] =
         "Kobo Sync",
     ["Kobo Sync failed: %1"] =
@@ -107,6 +107,8 @@ return {
         "ไว้ทีหลัง",
     ["Off"] =
         "ปิด",
+    ["On"] =
+        "เปิด",
     ["Reading progress: %1 sent, %2 received"] =
         "ความคืบหน้าการอ่าน: ส่ง %1 รับ %2",
     ["Reset"] =
@@ -143,16 +145,16 @@ return {
         "ซิงค์อัตโนมัติ: ทุก %1 นาที",
     ["Sync automatically: off"] =
         "ซิงค์อัตโนมัติ: ปิด",
-    ["Sync when KOReader starts"] =
-        "ซิงค์เมื่อเปิด KOReader",
+    ["Sync when KOReader starts: %1"] =
+        "ซิงค์เมื่อเปิด KOReader: %1",
     ["Synchronize now"] =
         "ซิงค์ตอนนี้",
     ["Synchronizes library and reading progress with a self-hosted Kobo Sync server "] =
         "ซิงค์คลังหนังสือและความคืบหน้าการอ่านกับเซิร์ฟเวอร์ Kobo Sync ที่คุณโฮสต์เอง ",
     ["Text list"] =
         "รายการแบบข้อความ",
-    ["Upload reading progress when closing a book"] =
-        "อัปโหลดความคืบหน้าการอ่านเมื่อปิดหนังสือ",
+    ["Upload reading progress when closing a book: %1"] =
+        "อัปโหลดความคืบหน้าการอ่านเมื่อปิดหนังสือ: %1",
     ["cannot write to the cover cache"] =
         "เขียนลงแคชปกหนังสือไม่ได้",
     ["never"] =

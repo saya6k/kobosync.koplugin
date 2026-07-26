@@ -43,8 +43,8 @@ return {
         "跳至",
     ["Keep"] =
         "保留",
-    ["Keep every book on this device"] =
-        "在本裝置保留所有書籍",
+    ["Keep every book on this device: %1"] =
+        "在本裝置保留所有書籍：%1",
     ["Kobo Sync"] =
         "Kobo Sync",
     ["Kobo Sync failed: %1"] =
@@ -107,6 +107,8 @@ return {
         "暫不",
     ["Off"] =
         "關閉",
+    ["On"] =
+        "開啟",
     ["Reading progress: %1 sent, %2 received"] =
         "閱讀進度：已傳送 %1，已接收 %2",
     ["Reset"] =
@@ -143,16 +145,16 @@ return {
         "自動同步：每 %1 分鐘",
     ["Sync automatically: off"] =
         "自動同步：關閉",
-    ["Sync when KOReader starts"] =
-        "KOReader 啟動時同步",
+    ["Sync when KOReader starts: %1"] =
+        "KOReader 啟動時同步：%1",
     ["Synchronize now"] =
         "立即同步",
     ["Synchronizes library and reading progress with a self-hosted Kobo Sync server "] =
         "與自架 Kobo Sync 伺服器同步書庫與閱讀進度 ",
     ["Text list"] =
         "文字清單",
-    ["Upload reading progress when closing a book"] =
-        "關閉書籍時上傳閱讀進度",
+    ["Upload reading progress when closing a book: %1"] =
+        "關閉書籍時上傳閱讀進度：%1",
     ["cannot write to the cover cache"] =
         "無法寫入封面快取",
     ["never"] =

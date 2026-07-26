@@ -43,8 +43,8 @@ return {
         "이동",
     ["Keep"] =
         "유지",
-    ["Keep every book on this device"] =
-        "이 기기에 모든 책 유지",
+    ["Keep every book on this device: %1"] =
+        "이 기기에 모든 책 유지: %1",
     ["Kobo Sync"] =
         "Kobo Sync",
     ["Kobo Sync failed: %1"] =
@@ -107,6 +107,8 @@ return {
         "나중에",
     ["Off"] =
         "끔",
+    ["On"] =
+        "켬",
     ["Reading progress: %1 sent, %2 received"] =
         "읽기 진행률: %1개 보냄, %2개 받음",
     ["Reset"] =
@@ -143,16 +145,16 @@ return {
         "자동 동기화: %1분마다",
     ["Sync automatically: off"] =
         "자동 동기화: 끔",
-    ["Sync when KOReader starts"] =
-        "KOReader 시작할 때 동기화",
+    ["Sync when KOReader starts: %1"] =
+        "KOReader 시작할 때 동기화: %1",
     ["Synchronize now"] =
         "지금 동기화",
     ["Synchronizes library and reading progress with a self-hosted Kobo Sync server "] =
         "자체 호스팅 Kobo Sync 서버와 서재 및 읽기 진행률을 동기화합니다 ",
     ["Text list"] =
         "텍스트 목록",
-    ["Upload reading progress when closing a book"] =
-        "책을 닫을 때 읽기 진행률 업로드",
+    ["Upload reading progress when closing a book: %1"] =
+        "책을 닫을 때 읽기 진행률 업로드: %1",
     ["cannot write to the cover cache"] =
         "표지 캐시에 쓸 수 없습니다",
     ["never"] =

@@ -43,8 +43,8 @@ return {
         "Aller",
     ["Keep"] =
         "Conserver",
-    ["Keep every book on this device"] =
-        "Conserver tous les livres sur cet appareil",
+    ["Keep every book on this device: %1"] =
+        "Conserver tous les livres sur cet appareil : %1",
     ["Kobo Sync"] =
         "Kobo Sync",
     ["Kobo Sync failed: %1"] =
@@ -107,6 +107,8 @@ return {
         "Pas maintenant",
     ["Off"] =
         "Désactivé",
+    ["On"] =
+        "Activé",
     ["Reading progress: %1 sent, %2 received"] =
         "Progression : %1 envoyés, %2 reçus",
     ["Reset"] =
@@ -143,16 +145,16 @@ return {
         "Synchronisation automatique : toutes les %1 minutes",
     ["Sync automatically: off"] =
         "Synchronisation automatique : désactivée",
-    ["Sync when KOReader starts"] =
-        "Synchroniser au démarrage de KOReader",
+    ["Sync when KOReader starts: %1"] =
+        "Synchroniser au démarrage de KOReader : %1",
     ["Synchronize now"] =
         "Synchroniser maintenant",
     ["Synchronizes library and reading progress with a self-hosted Kobo Sync server "] =
         "Synchronise la bibliothèque et la progression de lecture avec un serveur Kobo Sync auto-hébergé ",
     ["Text list"] =
         "Liste textuelle",
-    ["Upload reading progress when closing a book"] =
-        "Envoyer la progression à la fermeture d'un livre",
+    ["Upload reading progress when closing a book: %1"] =
+        "Envoyer la progression à la fermeture d'un livre : %1",
     ["cannot write to the cover cache"] =
         "impossible d'écrire dans le cache des couvertures",
     ["never"] =

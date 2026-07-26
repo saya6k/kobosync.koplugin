@@ -43,8 +43,8 @@ return {
         "Перейти",
     ["Keep"] =
         "Оставить",
-    ["Keep every book on this device"] =
-        "Хранить все книги на этом устройстве",
+    ["Keep every book on this device: %1"] =
+        "Хранить все книги на этом устройстве: %1",
     ["Kobo Sync"] =
         "Kobo Sync",
     ["Kobo Sync failed: %1"] =
@@ -107,6 +107,8 @@ return {
         "Не сейчас",
     ["Off"] =
         "Выключено",
+    ["On"] =
+        "Вкл.",
     ["Reading progress: %1 sent, %2 received"] =
         "Прогресс чтения: отправлено %1, получено %2",
     ["Reset"] =
@@ -143,16 +145,16 @@ return {
         "Автоматическая синхронизация: каждые %1 минут",
     ["Sync automatically: off"] =
         "Автоматическая синхронизация: выключена",
-    ["Sync when KOReader starts"] =
-        "Синхронизировать при запуске KOReader",
+    ["Sync when KOReader starts: %1"] =
+        "Синхронизировать при запуске KOReader: %1",
     ["Synchronize now"] =
         "Синхронизировать сейчас",
     ["Synchronizes library and reading progress with a self-hosted Kobo Sync server "] =
         "Синхронизирует библиотеку и прогресс чтения с собственным сервером Kobo Sync ",
     ["Text list"] =
         "Текстовый список",
-    ["Upload reading progress when closing a book"] =
-        "Отправлять прогресс чтения при закрытии книги",
+    ["Upload reading progress when closing a book: %1"] =
+        "Отправлять прогресс чтения при закрытии книги: %1",
     ["cannot write to the cover cache"] =
         "не удалось записать в кэш обложек",
     ["never"] =

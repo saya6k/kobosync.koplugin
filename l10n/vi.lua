@@ -43,8 +43,8 @@ return {
         "Chuyển",
     ["Keep"] =
         "Giữ lại",
-    ["Keep every book on this device"] =
-        "Giữ mọi cuốn sách trên thiết bị này",
+    ["Keep every book on this device: %1"] =
+        "Giữ mọi cuốn sách trên thiết bị này: %1",
     ["Kobo Sync"] =
         "Kobo Sync",
     ["Kobo Sync failed: %1"] =
@@ -107,6 +107,8 @@ return {
         "Để sau",
     ["Off"] =
         "Tắt",
+    ["On"] =
+        "Bật",
     ["Reading progress: %1 sent, %2 received"] =
         "Tiến độ đọc: đã gửi %1, đã nhận %2",
     ["Reset"] =
@@ -143,16 +145,16 @@ return {
         "Tự động đồng bộ: mỗi %1 phút",
     ["Sync automatically: off"] =
         "Tự động đồng bộ: tắt",
-    ["Sync when KOReader starts"] =
-        "Đồng bộ khi khởi động KOReader",
+    ["Sync when KOReader starts: %1"] =
+        "Đồng bộ khi khởi động KOReader: %1",
     ["Synchronize now"] =
         "Đồng bộ ngay",
     ["Synchronizes library and reading progress with a self-hosted Kobo Sync server "] =
         "Đồng bộ thư viện và tiến độ đọc với máy chủ Kobo Sync tự lưu trữ ",
     ["Text list"] =
         "Danh sách văn bản",
-    ["Upload reading progress when closing a book"] =
-        "Tải tiến độ đọc lên khi đóng sách",
+    ["Upload reading progress when closing a book: %1"] =
+        "Tải tiến độ đọc lên khi đóng sách: %1",
     ["cannot write to the cover cache"] =
         "không ghi được vào bộ đệm bìa sách",
     ["never"] =
