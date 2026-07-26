@@ -407,6 +407,9 @@ function KoboSync:addToMainMenu(menu_items)
                     .. "they arrive; on a first sync that means the whole library. "
                     .. "When disabled, syncing only updates the catalog and books are "
                     .. "downloaded one at a time from the server library browser."),
+                -- A checkbox that closes the menu on tap never shows the box it
+                -- just ticked, which reads as if nothing happened.
+                keep_menu_open = true,
                 checked_func = function() return self.download_mode == "auto" end,
                 callback = function()
                     self.download_mode = self.download_mode == "auto" and "on_demand" or "auto"
@@ -430,6 +433,7 @@ function KoboSync:addToMainMenu(menu_items)
                 help_text = _("Runs the same unattended sync once the device is online, "
                     .. "rather than after a fixed wait: catalog only, and given up on "
                     .. "if the network has not appeared within five minutes."),
+                keep_menu_open = true,
                 checked_func = function() return self.sync_on_start end,
                 callback = function()
                     self.sync_on_start = not self.sync_on_start
@@ -438,6 +442,7 @@ function KoboSync:addToMainMenu(menu_items)
             },
             {
                 text = _("Upload reading progress when closing a book"),
+                keep_menu_open = true,
                 checked_func = function() return self.upload_on_close end,
                 callback = function()
                     self.upload_on_close = not self.upload_on_close
