@@ -814,24 +814,35 @@ end
 -- Two-way reading state sync: push the queue, then pull server-newer states
 -- into local sidecars (skipping the currently open document).
 function KoboSync:applyReadingStates(state, api)
-    local pushed = self:flushPendingStates(state, api)
     local pulled = 0
     local open_file = self.ui and self.ui.document and self.ui.document.file
     for _idx, book in ipairs(state:list_books()) do
-        if book.downloaded and book.local_path and book.server_state
-                and book.local_path ~= open_file
-                and book.server_state.LastModified ~= book.applied_state_time then
+        -- The open document is left alone: its sidecar is written on close,
+        -- and reading it mid-session would send a half-finished position.
+        if book.downloaded and book.local_path and book.local_path ~= open_file then
             local local_state = self:readLocalState(book.local_path)
-            if ReadingState.resolve(local_state, book.server_state) == "pull" then
+            local action = ReadingState.plan(local_state, book.server_state, book)
+            if action == "pull" then
                 self:applyServerState(book.local_path, book.server_state)
                 pulled = pulled + 1
+                -- Record the sidecar we just wrote, so it is not offered back
+                -- to the server as a local change on the next run.
+                local written = self:readLocalState(book.local_path)
+                state:upsert_book(book.uuid, {
+                    applied_state_time = book.server_state.LastModified,
+                    pushed_local_time = written and written.modified_time,
+                })
+            elseif action == "push" then
+                state:set_pending_state(book.uuid,
+                    ReadingState.to_kobo(book.uuid, local_state, book.server_state))
+                state:upsert_book(book.uuid, {
+                    pushed_local_time = local_state.modified_time,
+                })
             end
-            state:upsert_book(book.uuid, {
-                applied_state_time = book.server_state.LastModified,
-            })
         end
     end
-    return pushed, pulled
+    -- Flushed after the walk so states found just now go out in this same run.
+    return self:flushPendingStates(state, api), pulled
 end
 
 -- Queue (and best-effort upload) the reading state whenever a book from the

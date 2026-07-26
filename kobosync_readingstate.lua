@@ -108,4 +108,31 @@ function ReadingState.resolve(local_state, server_state)
     return "noop"
 end
 
+-- What a sync should do for one book: resolve() decides which side is newer,
+-- this adds the bookkeeping that stops a state bouncing between the two.
+--
+-- `marks` carries what has already been exchanged for this book:
+--   applied_state_time  -- LastModified of the server state last written here
+--   pushed_local_time   -- sidecar mtime last queued for the server
+--
+-- Without the second mark a pull would push itself straight back: writing the
+-- sidecar makes it newer than the server state it came from, so the next run
+-- would see the device as ahead.
+function ReadingState.plan(local_state, server_state, marks)
+    marks = marks or {}
+    local decision = ReadingState.resolve(local_state, server_state)
+    if decision == "pull" then
+        if server_state and server_state.LastModified == marks.applied_state_time then
+            return "noop"
+        end
+        return "pull"
+    end
+    if decision == "push" then
+        if not local_state then return "noop" end
+        if local_state.modified_time == marks.pushed_local_time then return "noop" end
+        return "push"
+    end
+    return "noop"
+end
+
 return ReadingState
