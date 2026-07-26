@@ -169,6 +169,30 @@ local function switch_cover_mode(plugin, menu, mode)
     Browser.show(plugin)
 end
 
+-- Column counts worth offering: fewer than two is the list mode, more than
+-- five leaves covers smaller than the list mode already gave.
+local GRID_COL_CHOICES = { 2, 3, 4, 5 }
+
+local function show_grid_cols_menu(plugin, menu)
+    local dialog
+    local buttons = {}
+    for _, cols in ipairs(GRID_COL_CHOICES) do
+        table.insert(buttons, {{
+            text = (plugin.grid_cols == cols and "✓ " or "") .. T(_("%1 columns"), cols),
+            callback = function()
+                UIManager:close(dialog)
+                if plugin.grid_cols ~= cols then
+                    plugin:setGridCols(cols)
+                    UIManager:close(menu)
+                    Browser.show(plugin)
+                end
+            end,
+        }})
+    end
+    dialog = ButtonDialog:new{ buttons = buttons }
+    UIManager:show(dialog)
+end
+
 local function show_filter_menu(plugin, menu)
     local dialog
     local downloaded_label = menu.kobosync_downloaded_only
@@ -177,46 +201,57 @@ local function show_filter_menu(plugin, menu)
     local function mode_label(mode, label)
         return (plugin.cover_mode == mode and "✓ " or "") .. label
     end
-    dialog = ButtonDialog:new{
-        buttons = {
-            {{
-                text = _("Search…"),
-                callback = function()
-                    UIManager:close(dialog)
-                    show_search_dialog(plugin, menu)
-                end,
-            }},
-            {{
-                text = downloaded_label,
-                callback = function()
-                    UIManager:close(dialog)
-                    menu.kobosync_downloaded_only = not menu.kobosync_downloaded_only
-                    show_top(plugin, menu)
-                end,
-            }},
-            {{
-                text = mode_label("off", _("Text list")),
-                callback = function()
-                    UIManager:close(dialog)
-                    switch_cover_mode(plugin, menu, "off")
-                end,
-            }},
-            {{
-                text = mode_label("list", _("Cover list")),
-                callback = function()
-                    UIManager:close(dialog)
-                    switch_cover_mode(plugin, menu, "list")
-                end,
-            }},
-            {{
-                text = mode_label("grid", _("Cover grid")),
-                callback = function()
-                    UIManager:close(dialog)
-                    switch_cover_mode(plugin, menu, "grid")
-                end,
-            }},
-        },
+    local buttons = {
+        {{
+            text = _("Search…"),
+            callback = function()
+                UIManager:close(dialog)
+                show_search_dialog(plugin, menu)
+            end,
+        }},
+        {{
+            text = downloaded_label,
+            callback = function()
+                UIManager:close(dialog)
+                menu.kobosync_downloaded_only = not menu.kobosync_downloaded_only
+                show_top(plugin, menu)
+            end,
+        }},
+        {{
+            text = mode_label("off", _("Text list")),
+            callback = function()
+                UIManager:close(dialog)
+                switch_cover_mode(plugin, menu, "off")
+            end,
+        }},
+        {{
+            text = mode_label("list", _("Cover list")),
+            callback = function()
+                UIManager:close(dialog)
+                switch_cover_mode(plugin, menu, "list")
+            end,
+        }},
+        {{
+            text = mode_label("grid", _("Cover grid")),
+            callback = function()
+                UIManager:close(dialog)
+                switch_cover_mode(plugin, menu, "grid")
+            end,
+        }},
     }
+    -- Only meaningful in grid mode, so it is not shown otherwise. The list has
+    -- to be complete before the dialog is built: ButtonDialog lays its buttons
+    -- out in init, and appending afterwards would not show up.
+    if plugin.cover_mode == "grid" then
+        table.insert(buttons, {{
+            text = T(_("Grid columns: %1"), plugin.grid_cols),
+            callback = function()
+                UIManager:close(dialog)
+                show_grid_cols_menu(plugin, menu)
+            end,
+        }})
+    end
+    dialog = ButtonDialog:new{ buttons = buttons }
     UIManager:show(dialog)
 end
 
@@ -228,6 +263,7 @@ function Browser.show(plugin)
     local tried_covers = {}
     menu = class:new{
         kobosync_grid = plugin.cover_mode == "grid",
+        kobosync_grid_cols = plugin.grid_cols,
         title = _("Kobo Sync library"),
         subtitle = "",
         item_table = {},

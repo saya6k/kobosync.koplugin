@@ -90,6 +90,7 @@ function KoboSync:init()
     -- "off" | "list" | "grid". Migrated from the earlier boolean setting.
     self.cover_mode = self.settings:readSetting("cover_mode")
         or (self.settings:isTrue("show_covers") and "list" or "off")
+    self.grid_cols = tonumber(self.settings:readSetting("grid_cols")) or 3
     self.cover_dir = DataStorage:getDataDir() .. "/cache/kobosync"
     self:onDispatcherRegisterActions()
     self.ui.menu:registerToMainMenu(self)
@@ -421,6 +422,12 @@ end
 function KoboSync:setCoverMode(mode)
     self.cover_mode = mode
     self.settings:saveSetting("cover_mode", mode)
+    self.settings:flush()
+end
+
+function KoboSync:setGridCols(cols)
+    self.grid_cols = math.max(1, cols)
+    self.settings:saveSetting("grid_cols", self.grid_cols)
     self.settings:flush()
 end
 
