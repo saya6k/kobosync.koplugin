@@ -272,3 +272,78 @@ describe("KoboApi.sync retries", function()
         assert.are.equal(0, #slept)
     end)
 end)
+
+describe("KoboApi sync_request", function()
+    it("uses sync_request for library pages and request for everything else", function()
+        local sync_calls, plain_calls = 0, 0
+        local api = KoboApi.new{
+            base_url = "https://example.com/kobo/token123/",
+            json = json,
+            request = function()
+                plain_calls = plain_calls + 1
+                return { code = 200, headers = {}, body = "{}" }
+            end,
+            sync_request = function()
+                sync_calls = sync_calls + 1
+                return { code = 200, headers = { ["x-kobo-synctoken"] = "t1" }, body = "[]" }
+            end,
+        }
+        api:sync(nil, function() end)
+        api:get_state("uuid-1")
+        assert.are.equal(1, sync_calls)
+        assert.are.equal(1, plain_calls)
+    end)
+
+    it("falls back to request when no sync_request is injected", function()
+        local calls = 0
+        local api = KoboApi.new{
+            base_url = "https://example.com/kobo/token123/",
+            json = json,
+            request = function()
+                calls = calls + 1
+                return { code = 200, headers = { ["x-kobo-synctoken"] = "t1" }, body = "[]" }
+            end,
+        }
+        api:sync(nil, function() end)
+        assert.are.equal(1, calls)
+    end)
+
+    it("never retries a cancelled page", function()
+        local calls = 0
+        local slept = {}
+        local api = KoboApi.new{
+            base_url = "https://example.com/kobo/token123/",
+            json = json,
+            request = function() return nil, "unused" end,
+            sync_request = function()
+                calls = calls + 1
+                return nil, KoboApi.CANCELLED
+            end,
+            retry_delays = { 1, 2 },
+            sleep = function(seconds) table.insert(slept, seconds) end,
+        }
+        local token, err = api:sync(nil, function() end)
+        assert.is_nil(token)
+        assert.are.equal(KoboApi.CANCELLED, err)
+        assert.are.equal(1, calls)
+        assert.are.equal(0, #slept)
+    end)
+
+    it("still retries an ordinary failure from sync_request", function()
+        local calls = 0
+        local api = KoboApi.new{
+            base_url = "https://example.com/kobo/token123/",
+            json = json,
+            request = function() return nil, "unused" end,
+            sync_request = function()
+                calls = calls + 1
+                if calls == 1 then return nil, "Connection timed out" end
+                return { code = 200, headers = { ["x-kobo-synctoken"] = "t1" }, body = "[]" }
+            end,
+            retry_delays = { 1 },
+            sleep = function() end,
+        }
+        assert.are.equal("t1", api:sync(nil, function() end))
+        assert.are.equal(2, calls)
+    end)
+end)
