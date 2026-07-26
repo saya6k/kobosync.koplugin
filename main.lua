@@ -230,7 +230,8 @@ function KoboSync:addToMainMenu(menu_items)
                 callback = function()
                     self.sync_cancelled = true
                     UIManager:show(InfoMessage:new{
-                        text = _("Kobo Sync: stopping after the current page.\n\nWhat has been synced is kept, and syncing again resumes from here."),
+                        text = _("Kobo Sync: stopping after the current page.\n\n"
+                            .. "What has been synced is kept, and syncing again resumes from here."),
                     })
                 end,
             },
