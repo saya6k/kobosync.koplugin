@@ -21,6 +21,8 @@ return {
         "Xóa",
     ["Download"] =
         "Tải xuống",
+    ["Download all %1 books"] =
+        "Tải toàn bộ %1 cuốn",
     ["Download folder: %1"] =
         "Thư mục tải xuống: %1",
     ["Downloaded: %1"] =
@@ -31,6 +33,8 @@ return {
         "Mỗi %1 phút",
     ["Failed downloads: %1"] =
         "Tải xuống thất bại: %1",
+    ["Failed: %1"] =
+        "Thất bại: %1",
     ["Full Kobo Sync prefix including the personal token, as shown by your server (calibre-web: Profile → Kobo Sync Token)."] =
         "Tiền tố Kobo Sync đầy đủ, gồm cả mã cá nhân, đúng như máy chủ hiển thị (calibre-web: Hồ sơ → Kobo Sync Token).",
     ["Grid columns: %1"] =
@@ -57,10 +61,14 @@ return {
         "Kobo Sync đã dừng.\nMới: %1  Đã đổi: %2\n\nLần đồng bộ sau sẽ tiếp tục từ đây.",
     ["Kobo Sync: %1 book(s) were removed on the server. Delete the local files?\n\n%2"] =
         "Kobo Sync: %1 cuốn sách đã bị xóa trên máy chủ. Xóa tệp cục bộ?\n\n%2",
+    ["Kobo Sync: %1 downloaded."] =
+        "Kobo Sync: đã tải %1 cuốn.",
     ["Kobo Sync: %1 items, page %2…"] =
         "Kobo Sync: %1 mục, trang %2…",
     ["Kobo Sync: already synchronizing."] =
         "Kobo Sync: đang đồng bộ rồi.",
+    ["Kobo Sync: download %1 book(s) from “%2”?\n\n%3"] =
+        "Kobo Sync: tải %1 cuốn từ “%2”?\n\n%3",
     ["Kobo Sync: download %1 book(s) to this device now?"] =
         "Kobo Sync: tải %1 cuốn sách về thiết bị này ngay bây giờ?",
     ["Kobo Sync: download failed: %1"] =
@@ -69,12 +77,8 @@ return {
         "Kobo Sync: đang tải\n%1",
     ["Kobo Sync: downloading %1 of %2\n%3\n\nTap to cancel."] =
         "Kobo Sync: đang tải %1/%2\n%3\n\nChạm để hủy.",
-    ["Kobo Sync: fetching cover…"] =
-        "Kobo Sync: đang lấy bìa sách…",
     ["Kobo Sync: forget the sync state and catalog?\nDownloaded files are kept. The next synchronization will be a full one."] =
         "Kobo Sync: quên trạng thái đồng bộ và danh mục?\nCác tệp đã tải vẫn được giữ. Lần đồng bộ sau sẽ là đồng bộ đầy đủ.",
-    ["Kobo Sync: no cover (%1)"] =
-        "Kobo Sync: không có bìa (%1)",
     ["Kobo Sync: no downloadable format for this book."] =
         "Kobo Sync: không có định dạng tải xuống cho sách này.",
     ["Kobo Sync: set the server URL first."] =
@@ -91,6 +95,8 @@ return {
         "Kobo Sync: đang đồng bộ tiến độ đọc…",
     ["Kobo Sync: the server has newer reading progress (%1%). Jump there?"] =
         "Kobo Sync: máy chủ có tiến độ đọc mới hơn (%1 %). Chuyển tới đó?",
+    ["Kobo Sync: “%1” is already on this device."] =
+        "Kobo Sync: “%1” đã có trên thiết bị này.",
     ["Matches book titles and series names."] =
         "Tìm trong tên sách và tên bộ sách.",
     ["Missing locally: %1"] =

@@ -21,6 +21,8 @@ return {
         "Удалить",
     ["Download"] =
         "Загрузить",
+    ["Download all %1 books"] =
+        "Загрузить все %1 книг",
     ["Download folder: %1"] =
         "Папка загрузки: %1",
     ["Downloaded: %1"] =
@@ -31,6 +33,8 @@ return {
         "Каждые %1 минут",
     ["Failed downloads: %1"] =
         "Неудачные загрузки: %1",
+    ["Failed: %1"] =
+        "Не удалось: %1",
     ["Full Kobo Sync prefix including the personal token, as shown by your server (calibre-web: Profile → Kobo Sync Token)."] =
         "Полный префикс Kobo Sync вместе с личным токеном, как его показывает сервер (calibre-web: Профиль → Токен Kobo Sync).",
     ["Grid columns: %1"] =
@@ -57,10 +61,14 @@ return {
         "Kobo Sync остановлен.\nНовых: %1  Изменённых: %2\n\nСледующая синхронизация продолжится отсюда.",
     ["Kobo Sync: %1 book(s) were removed on the server. Delete the local files?\n\n%2"] =
         "Kobo Sync: %1 книг(и) удалено на сервере. Удалить локальные файлы?\n\n%2",
+    ["Kobo Sync: %1 downloaded."] =
+        "Kobo Sync: загружено %1.",
     ["Kobo Sync: %1 items, page %2…"] =
         "Kobo Sync: %1 элементов, страница %2…",
     ["Kobo Sync: already synchronizing."] =
         "Kobo Sync: синхронизация уже выполняется.",
+    ["Kobo Sync: download %1 book(s) from “%2”?\n\n%3"] =
+        "Kobo Sync: загрузить %1 книг(и) из «%2»?\n\n%3",
     ["Kobo Sync: download %1 book(s) to this device now?"] =
         "Kobo Sync: загрузить %1 книг(и) на это устройство сейчас?",
     ["Kobo Sync: download failed: %1"] =
@@ -69,12 +77,8 @@ return {
         "Kobo Sync: загрузка\n%1",
     ["Kobo Sync: downloading %1 of %2\n%3\n\nTap to cancel."] =
         "Kobo Sync: загрузка %1 из %2\n%3\n\nНажмите, чтобы отменить.",
-    ["Kobo Sync: fetching cover…"] =
-        "Kobo Sync: получение обложки…",
     ["Kobo Sync: forget the sync state and catalog?\nDownloaded files are kept. The next synchronization will be a full one."] =
         "Kobo Sync: забыть состояние синхронизации и каталог?\nЗагруженные файлы сохранятся. Следующая синхронизация будет полной.",
-    ["Kobo Sync: no cover (%1)"] =
-        "Kobo Sync: нет обложки (%1)",
     ["Kobo Sync: no downloadable format for this book."] =
         "Kobo Sync: нет доступного для загрузки формата этой книги.",
     ["Kobo Sync: set the server URL first."] =
@@ -91,6 +95,8 @@ return {
         "Kobo Sync: синхронизация прогресса чтения…",
     ["Kobo Sync: the server has newer reading progress (%1%). Jump there?"] =
         "Kobo Sync: на сервере более новый прогресс чтения (%1 %). Перейти туда?",
+    ["Kobo Sync: “%1” is already on this device."] =
+        "Kobo Sync: «%1» уже есть на этом устройстве.",
     ["Matches book titles and series names."] =
         "Ищет по названиям книг и серий.",
     ["Missing locally: %1"] =

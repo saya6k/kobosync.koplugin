@@ -21,6 +21,8 @@ return {
         "Verwijderen",
     ["Download"] =
         "Downloaden",
+    ["Download all %1 books"] =
+        "Alle %1 boeken downloaden",
     ["Download folder: %1"] =
         "Downloadmap: %1",
     ["Downloaded: %1"] =
@@ -31,6 +33,8 @@ return {
         "Elke %1 minuten",
     ["Failed downloads: %1"] =
         "Mislukte downloads: %1",
+    ["Failed: %1"] =
+        "Mislukt: %1",
     ["Full Kobo Sync prefix including the personal token, as shown by your server (calibre-web: Profile → Kobo Sync Token)."] =
         "Volledige Kobo Sync-prefix inclusief persoonlijk token, zoals uw server die toont (calibre-web: Profiel → Kobo Sync-token).",
     ["Grid columns: %1"] =
@@ -57,10 +61,14 @@ return {
         "Kobo Sync gestopt.\nNieuw: %1  Gewijzigd: %2\n\nDe volgende synchronisatie gaat hier verder.",
     ["Kobo Sync: %1 book(s) were removed on the server. Delete the local files?\n\n%2"] =
         "Kobo Sync: %1 boek(en) zijn op de server verwijderd. Lokale bestanden verwijderen?\n\n%2",
+    ["Kobo Sync: %1 downloaded."] =
+        "Kobo Sync: %1 gedownload.",
     ["Kobo Sync: %1 items, page %2…"] =
         "Kobo Sync: %1 items, pagina %2…",
     ["Kobo Sync: already synchronizing."] =
         "Kobo Sync: er wordt al gesynchroniseerd.",
+    ["Kobo Sync: download %1 book(s) from “%2”?\n\n%3"] =
+        "Kobo Sync: %1 boek(en) uit “%2” downloaden?\n\n%3",
     ["Kobo Sync: download %1 book(s) to this device now?"] =
         "Kobo Sync: %1 boek(en) nu naar dit apparaat downloaden?",
     ["Kobo Sync: download failed: %1"] =
@@ -69,12 +77,8 @@ return {
         "Kobo Sync: downloaden\n%1",
     ["Kobo Sync: downloading %1 of %2\n%3\n\nTap to cancel."] =
         "Kobo Sync: %1 van %2 downloaden\n%3\n\nTik om te annuleren.",
-    ["Kobo Sync: fetching cover…"] =
-        "Kobo Sync: omslag ophalen…",
     ["Kobo Sync: forget the sync state and catalog?\nDownloaded files are kept. The next synchronization will be a full one."] =
         "Kobo Sync: synchronisatiestatus en catalogus vergeten?\nGedownloade bestanden blijven behouden. De volgende synchronisatie is een volledige.",
-    ["Kobo Sync: no cover (%1)"] =
-        "Kobo Sync: geen omslag (%1)",
     ["Kobo Sync: no downloadable format for this book."] =
         "Kobo Sync: geen downloadbaar formaat voor dit boek.",
     ["Kobo Sync: set the server URL first."] =
@@ -91,6 +95,8 @@ return {
         "Kobo Sync: leesvoortgang synchroniseren…",
     ["Kobo Sync: the server has newer reading progress (%1%). Jump there?"] =
         "Kobo Sync: de server heeft nieuwere leesvoortgang (%1 %). Daarheen springen?",
+    ["Kobo Sync: “%1” is already on this device."] =
+        "Kobo Sync: “%1” staat al op dit apparaat.",
     ["Matches book titles and series names."] =
         "Zoekt in boektitels en reeksnamen.",
     ["Missing locally: %1"] =

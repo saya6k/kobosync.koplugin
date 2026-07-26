@@ -389,33 +389,73 @@ function SyncEngine.reconcile_downloads(store, exists)
     return reset
 end
 
+-- A book already on the device is only worth fetching again when the server has
+-- replaced the file. RevisionId stays constant on calibre-web, so a size change
+-- is the only signal there is.
+local function is_stale(book, pick)
+    return (book.downloaded_revision ~= book.revision_id)
+        or (book.downloaded_size ~= pick.Size)
+end
+
+local function plan_entry(book, pick)
+    return {
+        uuid = book.uuid,
+        title = book.title,
+        url = pick.Url,
+        format = pick.Format,
+        size = pick.Size,
+        revision_id = book.revision_id,
+        redownload = book.downloaded or false,
+    }
+end
+
 function SyncEngine.plan_downloads(store, mode)
     local plan = {}
-    for _, book in ipairs(store:list_books()) do
+    for _idx, book in ipairs(store:list_books()) do
         local pick = SyncEngine.pick_download(book.download_urls)
         if pick then
             local want
             if book.downloaded then
-                want = (book.downloaded_revision ~= book.revision_id)
-                    or (book.downloaded_size ~= pick.Size)
+                want = is_stale(book, pick)
             else
                 want = mode == "auto"
             end
             if want then
-                table.insert(plan, {
-                    uuid = book.uuid,
-                    title = book.title,
-                    url = pick.Url,
-                    format = pick.Format,
-                    size = pick.Size,
-                    revision_id = book.revision_id,
-                    redownload = book.downloaded or false,
-                })
+                table.insert(plan, plan_entry(book, pick))
             end
         end
     end
     table.sort(plan, function(a, b) return (a.title or "") < (b.title or "") end)
     return plan
+end
+
+-- Plan for books the user picked out by hand, such as a whole series. The
+-- download mode does not apply: asking for these is the decision that mode
+-- would otherwise be making. Order follows the series so chapters arrive in
+-- reading order, which is also the order they will be read in if the run is
+-- interrupted.
+function SyncEngine.plan_books(books)
+    local plan = {}
+    local order = {}
+    for index, book in ipairs(books) do
+        local pick = SyncEngine.pick_download(book.download_urls)
+        if pick and (not book.downloaded or is_stale(book, pick)) then
+            local entry = plan_entry(book, pick)
+            order[entry] = index
+            table.insert(plan, entry)
+        end
+    end
+    table.sort(plan, function(a, b) return order[a] < order[b] end)
+    return plan
+end
+
+-- Bytes the plan will pull down, for telling the user before they commit.
+function SyncEngine.plan_size(plan)
+    local total = 0
+    for _idx, item in ipairs(plan) do
+        total = total + (tonumber(item.size) or 0)
+    end
+    return total
 end
 
 return SyncEngine

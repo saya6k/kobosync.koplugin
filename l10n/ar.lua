@@ -21,6 +21,8 @@ return {
         "حذف",
     ["Download"] =
         "تنزيل",
+    ["Download all %1 books"] =
+        "تنزيل كل الكتب (%1)",
     ["Download folder: %1"] =
         "مجلد التنزيل: %1",
     ["Downloaded: %1"] =
@@ -31,6 +33,8 @@ return {
         "كل %1 دقيقة",
     ["Failed downloads: %1"] =
         "تنزيلات فاشلة: %1",
+    ["Failed: %1"] =
+        "فشل: %1",
     ["Full Kobo Sync prefix including the personal token, as shown by your server (calibre-web: Profile → Kobo Sync Token)."] =
         "بادئة Kobo Sync الكاملة متضمنةً الرمز الشخصي، كما يعرضها الخادم (calibre-web: الملف الشخصي ← رمز Kobo Sync).",
     ["Grid columns: %1"] =
@@ -57,10 +61,14 @@ return {
         "أُوقفت مزامنة Kobo Sync.\nجديد: %1  متغيّر: %2\n\nستكمل المزامنة التالية من هنا.",
     ["Kobo Sync: %1 book(s) were removed on the server. Delete the local files?\n\n%2"] =
         "Kobo Sync: أُزيل %1 كتاب من الخادم. هل تحذف الملفات المحلية؟\n\n%2",
+    ["Kobo Sync: %1 downloaded."] =
+        "Kobo Sync: تم تنزيل %1.",
     ["Kobo Sync: %1 items, page %2…"] =
         "Kobo Sync: %1 عنصر، صفحة %2…",
     ["Kobo Sync: already synchronizing."] =
         "Kobo Sync: المزامنة جارية بالفعل.",
+    ["Kobo Sync: download %1 book(s) from “%2”?\n\n%3"] =
+        "Kobo Sync: هل تنزّل %1 كتاب من «%2»؟\n\n%3",
     ["Kobo Sync: download %1 book(s) to this device now?"] =
         "Kobo Sync: هل تنزّل %1 كتاب إلى هذا الجهاز الآن؟",
     ["Kobo Sync: download failed: %1"] =
@@ -69,12 +77,8 @@ return {
         "Kobo Sync: جارٍ التنزيل\n%1",
     ["Kobo Sync: downloading %1 of %2\n%3\n\nTap to cancel."] =
         "Kobo Sync: تنزيل %1 من %2\n%3\n\nانقر للإلغاء.",
-    ["Kobo Sync: fetching cover…"] =
-        "Kobo Sync: جلب الغلاف…",
     ["Kobo Sync: forget the sync state and catalog?\nDownloaded files are kept. The next synchronization will be a full one."] =
         "Kobo Sync: هل تريد نسيان حالة المزامنة والفهرس؟\nتبقى الملفات المنزَّلة. ستكون المزامنة التالية كاملة.",
-    ["Kobo Sync: no cover (%1)"] =
-        "Kobo Sync: لا يوجد غلاف (%1)",
     ["Kobo Sync: no downloadable format for this book."] =
         "Kobo Sync: لا توجد صيغة قابلة للتنزيل لهذا الكتاب.",
     ["Kobo Sync: set the server URL first."] =
@@ -91,6 +95,8 @@ return {
         "Kobo Sync: مزامنة تقدم القراءة…",
     ["Kobo Sync: the server has newer reading progress (%1%). Jump there?"] =
         "Kobo Sync: لدى الخادم تقدم قراءة أحدث (%1%). هل تنتقل إليه؟",
+    ["Kobo Sync: “%1” is already on this device."] =
+        "Kobo Sync: «%1» موجود بالفعل على هذا الجهاز.",
     ["Matches book titles and series names."] =
         "يبحث في عناوين الكتب وأسماء السلاسل.",
     ["Missing locally: %1"] =

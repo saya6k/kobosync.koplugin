@@ -21,6 +21,8 @@ return {
         "삭제",
     ["Download"] =
         "다운로드",
+    ["Download all %1 books"] =
+        "%1권 전체 내려받기",
     ["Download folder: %1"] =
         "다운로드 폴더: %1",
     ["Downloaded: %1"] =
@@ -31,6 +33,8 @@ return {
         "%1분마다",
     ["Failed downloads: %1"] =
         "다운로드 실패: %1",
+    ["Failed: %1"] =
+        "실패: %1",
     ["Full Kobo Sync prefix including the personal token, as shown by your server (calibre-web: Profile → Kobo Sync Token)."] =
         "서버가 표시하는 개인 토큰을 포함한 Kobo Sync 전체 주소 (calibre-web: 프로필 → Kobo Sync 토큰).",
     ["Grid columns: %1"] =
@@ -57,10 +61,14 @@ return {
         "Kobo Sync 중지됨.\n새로 추가: %1  변경: %2\n\n다음 동기화가 여기서 이어집니다.",
     ["Kobo Sync: %1 book(s) were removed on the server. Delete the local files?\n\n%2"] =
         "Kobo Sync: 서버에서 %1권이 제거되었습니다. 기기의 파일도 삭제할까요?\n\n%2",
+    ["Kobo Sync: %1 downloaded."] =
+        "Kobo Sync: %1권을 내려받았습니다.",
     ["Kobo Sync: %1 items, page %2…"] =
         "Kobo Sync: %1개 항목, %2페이지…",
     ["Kobo Sync: already synchronizing."] =
         "Kobo Sync: 이미 동기화 중입니다.",
+    ["Kobo Sync: download %1 book(s) from “%2”?\n\n%3"] =
+        "Kobo Sync: 「%2」에서 %1권을 내려받을까요?\n\n%3",
     ["Kobo Sync: download %1 book(s) to this device now?"] =
         "Kobo Sync: %1권을 지금 이 기기로 내려받을까요?",
     ["Kobo Sync: download failed: %1"] =
@@ -69,12 +77,8 @@ return {
         "Kobo Sync: 내려받는 중\n%1",
     ["Kobo Sync: downloading %1 of %2\n%3\n\nTap to cancel."] =
         "Kobo Sync: %2권 중 %1권 내려받는 중\n%3\n\n탭하면 취소합니다.",
-    ["Kobo Sync: fetching cover…"] =
-        "Kobo Sync: 표지를 가져오는 중…",
     ["Kobo Sync: forget the sync state and catalog?\nDownloaded files are kept. The next synchronization will be a full one."] =
         "Kobo Sync: 동기화 상태와 목록을 지울까요?\n내려받은 파일은 유지됩니다. 다음 동기화는 전체 동기화가 됩니다.",
-    ["Kobo Sync: no cover (%1)"] =
-        "Kobo Sync: 표지 없음 (%1)",
     ["Kobo Sync: no downloadable format for this book."] =
         "Kobo Sync: 이 책은 내려받을 수 있는 형식이 없습니다.",
     ["Kobo Sync: set the server URL first."] =
@@ -91,6 +95,8 @@ return {
         "Kobo Sync: 읽기 진행률 동기화 중…",
     ["Kobo Sync: the server has newer reading progress (%1%). Jump there?"] =
         "Kobo Sync: 서버에 더 최근 읽기 진행률(%1%)이 있습니다. 그 위치로 이동할까요?",
+    ["Kobo Sync: “%1” is already on this device."] =
+        "Kobo Sync: 「%1」은(는) 이미 이 기기에 있습니다.",
     ["Matches book titles and series names."] =
         "책 제목과 시리즈 이름에서 찾습니다.",
     ["Missing locally: %1"] =

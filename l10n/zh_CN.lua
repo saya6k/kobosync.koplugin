@@ -21,6 +21,8 @@ return {
         "删除",
     ["Download"] =
         "下载",
+    ["Download all %1 books"] =
+        "下载全部 %1 本",
     ["Download folder: %1"] =
         "下载文件夹：%1",
     ["Downloaded: %1"] =
@@ -31,6 +33,8 @@ return {
         "每 %1 分钟",
     ["Failed downloads: %1"] =
         "下载失败：%1",
+    ["Failed: %1"] =
+        "失败：%1",
     ["Full Kobo Sync prefix including the personal token, as shown by your server (calibre-web: Profile → Kobo Sync Token)."] =
         "服务器显示的完整 Kobo Sync 前缀，包含个人令牌（calibre-web：个人资料 → Kobo Sync 令牌）。",
     ["Grid columns: %1"] =
@@ -57,10 +61,14 @@ return {
         "Kobo Sync 已停止。\n新增：%1  变更：%2\n\n下次同步将从此处继续。",
     ["Kobo Sync: %1 book(s) were removed on the server. Delete the local files?\n\n%2"] =
         "Kobo Sync：服务器上已删除 %1 本书。要删除本地文件吗？\n\n%2",
+    ["Kobo Sync: %1 downloaded."] =
+        "Kobo Sync：已下载 %1 本。",
     ["Kobo Sync: %1 items, page %2…"] =
         "Kobo Sync：%1 个条目，第 %2 页…",
     ["Kobo Sync: already synchronizing."] =
         "Kobo Sync：已在同步中。",
+    ["Kobo Sync: download %1 book(s) from “%2”?\n\n%3"] =
+        "Kobo Sync：要从《%2》下载 %1 本书吗？\n\n%3",
     ["Kobo Sync: download %1 book(s) to this device now?"] =
         "Kobo Sync：现在将 %1 本书下载到本设备吗？",
     ["Kobo Sync: download failed: %1"] =
@@ -69,12 +77,8 @@ return {
         "Kobo Sync：正在下载\n%1",
     ["Kobo Sync: downloading %1 of %2\n%3\n\nTap to cancel."] =
         "Kobo Sync：正在下载第 %1／%2 本\n%3\n\n点击可取消。",
-    ["Kobo Sync: fetching cover…"] =
-        "Kobo Sync：正在获取封面…",
     ["Kobo Sync: forget the sync state and catalog?\nDownloaded files are kept. The next synchronization will be a full one."] =
         "Kobo Sync：要清除同步状态和目录吗？\n已下载的文件会保留。下次同步将是完整同步。",
-    ["Kobo Sync: no cover (%1)"] =
-        "Kobo Sync：无封面（%1）",
     ["Kobo Sync: no downloadable format for this book."] =
         "Kobo Sync：该书没有可下载的格式。",
     ["Kobo Sync: set the server URL first."] =
@@ -91,6 +95,8 @@ return {
         "Kobo Sync：正在同步阅读进度…",
     ["Kobo Sync: the server has newer reading progress (%1%). Jump there?"] =
         "Kobo Sync：服务器上的阅读进度更新（%1%）。要跳转过去吗？",
+    ["Kobo Sync: “%1” is already on this device."] =
+        "Kobo Sync：《%1》已在本设备上。",
     ["Matches book titles and series names."] =
         "搜索书名和系列名。",
     ["Missing locally: %1"] =
