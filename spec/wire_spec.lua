@@ -34,7 +34,7 @@ describe("Wire", function()
     end)
 
     it("names a missing error rather than losing it", function()
-        local _resp, err = Wire.decode(Wire.encode(nil, nil))
+        local err = select(2, Wire.decode(Wire.encode(nil, nil)))
         assert.are.equal("network error", err)
     end)
 
