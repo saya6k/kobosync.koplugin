@@ -87,7 +87,9 @@ function KoboSync:init()
     self.download_mode = self.settings:readSetting("download_mode") or "auto"
     self.upload_on_close = self.settings:nilOrTrue("upload_on_close")
     self.image_url_template = self.settings:readSetting("image_url_template")
-    self.show_covers = self.settings:isTrue("show_covers")
+    -- "off" | "list" | "grid". Migrated from the earlier boolean setting.
+    self.cover_mode = self.settings:readSetting("cover_mode")
+        or (self.settings:isTrue("show_covers") and "list" or "off")
     self.cover_dir = DataStorage:getDataDir() .. "/cache/kobosync"
     self:onDispatcherRegisterActions()
     self.ui.menu:registerToMainMenu(self)
@@ -416,9 +418,9 @@ function KoboSync:cachedCoverPath(book)
     return nil
 end
 
-function KoboSync:setShowCovers(enabled)
-    self.show_covers = enabled
-    self.settings:saveSetting("show_covers", enabled)
+function KoboSync:setCoverMode(mode)
+    self.cover_mode = mode
+    self.settings:saveSetting("cover_mode", mode)
     self.settings:flush()
 end
 
