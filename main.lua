@@ -286,9 +286,15 @@ function KoboSync:addToMainMenu(menu_items)
                 end,
             },
             {
-                text = _("Download new books automatically"),
-                help_text = _("When disabled, syncing only updates the catalog; "
-                    .. "download books individually from the server library browser."),
+                -- Named for the state it keeps rather than the action it
+                -- takes: it fetches every book the catalog lists and the device
+                -- lacks, which on a first sync is the entire library, not just
+                -- what arrived since last time.
+                text = _("Keep every book on this device"),
+                help_text = _("Downloads every book in the library and fetches new ones as "
+                    .. "they arrive; on a first sync that means the whole library. "
+                    .. "When disabled, syncing only updates the catalog and books are "
+                    .. "downloaded one at a time from the server library browser."),
                 checked_func = function() return self.download_mode == "auto" end,
                 callback = function()
                     self.download_mode = self.download_mode == "auto" and "on_demand" or "auto"
