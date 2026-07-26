@@ -1,4 +1,4 @@
-local ReadingState = dofile("readingstate.lua")
+local ReadingState = dofile("kobosync_readingstate.lua")
 
 describe("ReadingState timestamps", function()
     it("round-trips iso <-> epoch as UTC", function()

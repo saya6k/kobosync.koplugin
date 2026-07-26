@@ -24,12 +24,12 @@ local T = ffiUtil.template
 
 local Event = require("ui/event")
 
-local KoboApi = require("koboapi")
-local ReadingState = require("readingstate")
-local StateStore = require("statestore")
-local SyncEngine = require("syncengine")
-local SyncIndicator = require("syncindicator")
-local Wire = require("wire")
+local KoboApi = require("kobosync_koboapi")
+local ReadingState = require("kobosync_readingstate")
+local StateStore = require("kobosync_statestore")
+local SyncEngine = require("kobosync_syncengine")
+local SyncIndicator = require("kobosync_syncindicator")
+local Wire = require("kobosync_wire")
 
 -- Ask before bulk downloads (first sync, or mass changes later).
 local BULK_CONFIRM_THRESHOLD = 10
@@ -317,7 +317,7 @@ function KoboSync:addToMainMenu(menu_items)
                 text = _("Browse server library"),
                 enabled_func = function() return self.server_url ~= nil end,
                 callback = function()
-                    local Browser = require("browser")
+                    local Browser = require("kobosync_browser")
                     Browser.show(self)
                 end,
             },

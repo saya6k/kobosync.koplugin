@@ -1,4 +1,4 @@
-local Wire = dofile("wire.lua")
+local Wire = dofile("kobosync_wire.lua")
 
 describe("Wire", function()
     it("round-trips a response", function()

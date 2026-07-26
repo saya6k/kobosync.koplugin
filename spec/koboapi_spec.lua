@@ -1,5 +1,5 @@
 local json = require("dkjson")
-local KoboApi = dofile("koboapi.lua")
+local KoboApi = dofile("kobosync_koboapi.lua")
 
 -- Builds a fake request function serving scripted responses in order,
 -- recording every request it receives.

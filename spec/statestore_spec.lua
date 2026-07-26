@@ -1,5 +1,5 @@
 local json = require("dkjson")
-local StateStore = dofile("statestore.lua")
+local StateStore = dofile("kobosync_statestore.lua")
 
 describe("StateStore", function()
     local path

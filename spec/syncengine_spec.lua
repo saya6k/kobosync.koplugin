@@ -1,6 +1,6 @@
 local json = require("dkjson")
-local StateStore = dofile("statestore.lua")
-local SyncEngine = dofile("syncengine.lua")
+local StateStore = dofile("kobosync_statestore.lua")
+local SyncEngine = dofile("kobosync_syncengine.lua")
 
 local function new_store()
     local path = os.tmpname()

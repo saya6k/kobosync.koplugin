@@ -15,7 +15,7 @@ local function read(path)
 end
 
 describe("SyncIndicator", function()
-    local source = read("syncindicator.lua")
+    local source = read("kobosync_syncindicator.lua")
 
     it("is a toast, so it never stops event propagation", function()
         assert.is_truthy(source:match("toast%s*=%s*true"),

@@ -4,7 +4,7 @@ local ButtonDialog = require("ui/widget/buttondialog")
 local ConfirmBox = require("ui/widget/confirmbox")
 local InfoMessage = require("ui/widget/infomessage")
 local InputDialog = require("ui/widget/inputdialog")
-local CoverMenu = require("covermenu")
+local CoverMenu = require("kobosync_covermenu")
 local Menu = require("ui/widget/menu")
 local NetworkMgr = require("ui/network/manager")
 local Trapper = require("ui/trapper")
@@ -14,7 +14,7 @@ local util = require("util")
 local _ = require("kobosync_gettext")
 local T = require("ffi/util").template
 
-local SyncEngine = require("syncengine")
+local SyncEngine = require("kobosync_syncengine")
 
 local Browser = {}
 

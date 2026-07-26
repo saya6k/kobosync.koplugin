@@ -141,7 +141,10 @@ function CoverMenu:_recalculateDimen(no_recalculate_dimen)
     -- re-clamp against the grid's own count below.
     local requested_page = self.page
     Menu._recalculateDimen(self, no_recalculate_dimen)
-    if not self.available_height then
+    -- Once the grid has failed, this has to become a plain pass-through:
+    -- leaving grid geometry (perpage, item_dimen) behind for the stock builder
+    -- to work with is how a fallback turns into a second, worse crash.
+    if self.kobosync_covers_broken or not self.available_height then
         return
     end
     local cols = self.kobosync_grid_cols
@@ -240,7 +243,12 @@ function CoverMenu:updateItems(select_number, no_recalculate_dimen)
     if self.kobosync_covers_broken then
         return Menu.updateItems(self, select_number, no_recalculate_dimen)
     end
-    local ok, err = pcall(self._buildCoverItems, self, select_number, no_recalculate_dimen)
+    -- xpcall with a traceback, not pcall: the message alone ("attempt to call a
+    -- nil value") says nothing about which line, which is exactly what is
+    -- needed when this only fails on someone else's device.
+    local ok, err = xpcall(function()
+        return self:_buildCoverItems(select_number, no_recalculate_dimen)
+    end, debug.traceback)
     if not ok then
         logger.warn("KoboSync: cover rows failed, falling back to the plain list:", err)
         self.kobosync_covers_broken = true
