@@ -12,6 +12,10 @@ KoboApi.__index = KoboApi
 local SYNC_TOKEN_HEADER = "x-kobo-synctoken"
 local SYNC_CONTINUE_HEADER = "x-kobo-sync"
 local MAX_SYNC_PAGES = 1000
+-- Seconds to wait before each retry of a sync page. A full library walk is
+-- twenty-odd requests against a server that needs ten seconds to build each
+-- one, and a single dropped connection used to end the whole run.
+local DEFAULT_RETRY_DELAYS = { 2, 5 }
 
 function KoboApi.new(opts)
     assert(opts.base_url, "base_url required")
@@ -21,6 +25,9 @@ function KoboApi.new(opts)
     self.base_url = opts.base_url:gsub("/+$", "")
     self.request = opts.request
     self.json = opts.json
+    self.retry_delays = opts.retry_delays or DEFAULT_RETRY_DELAYS
+    -- Injected so this module stays free of any socket implementation.
+    self.sleep = opts.sleep or function() end
     return self
 end
 
@@ -57,6 +64,29 @@ function KoboApi:_request_json(method, path, body)
     return decoded, nil, resp
 end
 
+-- Fetches one sync page, retrying transport failures and server errors. A
+-- 4xx is the server refusing the request rather than a hiccup, so it is not
+-- retried. Returns the response, or nil and a message.
+function KoboApi:_sync_page(req)
+    local resp, err
+    for attempt = 1, #self.retry_delays + 1 do
+        if attempt > 1 then
+            self.sleep(self.retry_delays[attempt - 1])
+        end
+        resp, err = self.request(req)
+        if resp and resp.code == 200 then
+            return resp
+        end
+        if resp and resp.code < 500 then
+            return nil, "HTTP " .. tostring(resp.code)
+        end
+    end
+    if resp then
+        return nil, "HTTP " .. tostring(resp.code)
+    end
+    return nil, err or "network error"
+end
+
 -- Incremental library sync. Calls on_page(items, page_number) for every page
 -- received; returning false from it stops the walk and returns the token for
 -- the pages consumed so far, so a cancelled sync resumes rather than restarts.
@@ -74,12 +104,9 @@ function KoboApi:sync(synctoken, on_page)
         if token then
             req.headers[SYNC_TOKEN_HEADER] = token
         end
-        local resp, err = self.request(req)
+        local resp, err = self:_sync_page(req)
         if not resp then
-            return nil, err or "network error", token
-        end
-        if resp.code ~= 200 then
-            return nil, "HTTP " .. tostring(resp.code), token
+            return nil, err, token
         end
         local ok, items = pcall(self.json.decode, resp.body)
         if not ok or type(items) ~= "table" then

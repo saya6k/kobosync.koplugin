@@ -125,6 +125,7 @@ function KoboSync:getApi()
         base_url = self.server_url,
         request = http_request,
         json = rapidjson,
+        sleep = socket.sleep,
     }
 end
 
@@ -276,9 +277,16 @@ function KoboSync:doSync()
     state:save()
     if not token then
         Trapper:clear()
-        UIManager:show(InfoMessage:new{
-            text = T(_("Kobo Sync failed: %1"), err or _("unknown error")),
-        })
+        -- A failed page keeps the token for the pages before it, so say so:
+        -- "failed" alone reads as if the whole run was thrown away.
+        local message
+        if state:get_synctoken() then
+            message = T(_("Kobo Sync interrupted: %1\nNew: %2  Changed: %3\n\nSyncing again resumes from here."),
+                err or _("unknown error"), result.new, result.changed)
+        else
+            message = T(_("Kobo Sync failed: %1"), err or _("unknown error"))
+        end
+        UIManager:show(InfoMessage:new{ text = message })
         return
     end
     if cancelled then
