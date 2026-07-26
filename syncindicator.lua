@@ -2,9 +2,16 @@
 --
 -- KOReader's TrapWidget draws exactly this, but it is an InputContainer that
 -- claims every tap, hold and swipe on the screen so it can interrupt whatever
--- it is guarding. A background sync must not do that -- the reader underneath
--- has to keep turning pages -- so this borrows the layout and registers no
--- gestures at all: events fall straight through to the widget below.
+-- it is guarding. A background sync must not do that: the reader underneath has
+-- to keep turning pages.
+--
+-- Registering no gestures is not enough. UIManager:sendEvent walks the window
+-- stack from the top and hands the event to the first widget that is not a
+-- toast, whether or not that widget has a handler for it -- so an ordinary
+-- widget sitting on top swallows input simply by existing. `toast` is the flag
+-- that means "draw me on top but never stop propagation", and UIManager:show
+-- keeps toasts stacked above anything opened later, so a menu opened during a
+-- sync still gets its taps.
 
 local Blitbuffer = require("ffi/blitbuffer")
 local BottomContainer = require("ui/widget/container/bottomcontainer")
@@ -22,6 +29,11 @@ local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local Screen = Device.screen
 
 local SyncIndicator = WidgetContainer:extend{
+    toast = true,
+    -- UIManager reads this off whatever it shows, and a missing value means
+    -- "disable it"; without this, showing the indicator would turn double tap
+    -- off in the reader underneath.
+    disable_double_tap = false,
     text = "",
     face = Font:getFace("infofont"),
 }
