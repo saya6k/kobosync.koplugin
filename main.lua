@@ -268,8 +268,14 @@ function KoboSync:doSync()
         -- bar. Trapper:info also yields, which lets the screen repaint between
         -- pages -- without it a first sync of a large library looks like a hang.
         if not Trapper:info(T(_("Kobo Sync: %1 items, page %2…\n\nTap to stop."), seen, page)) then
-            cancelled = true
-            return false
+            -- Ask rather than stop outright: on an e-ink screen a stray tap
+            -- should not throw away a walk that takes minutes.
+            if Trapper:confirm(
+                    _("Stop syncing?\n\nWhat has been synced so far is kept, and syncing again resumes from here."),
+                    _("Continue"), _("Stop")) then
+                cancelled = true
+                return false
+            end
         end
     end)
     -- Keep progress from already processed pages even on a failed run.
