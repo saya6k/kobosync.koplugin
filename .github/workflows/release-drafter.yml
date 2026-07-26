@@ -1,0 +1,93 @@
+name: Release Drafter
+
+# Keeps a draft release for the next version up to date as PRs land on main.
+# Drafts are invisible to anonymous GitHub API callers, and appstore.koplugin
+# filters `draft` out of update detection anyway, so nothing here reaches users
+# until the draft is published by hand -- which is what fires the release job
+# in ci.yml (version stamping + zip asset).
+# yamllint disable-line rule:truthy
+on:
+  push:
+    branches: [main]
+  # Label PRs from their Conventional-Commit title so the version-resolver can
+  # pick the bump (feat -> minor; fix/chore/ci -> patch). Without a PR trigger
+  # the autolabeler never runs, so every release would default to patch. Uses
+  # pull_request_target so labeling works for fork PRs too; release-drafter only
+  # calls the API (no PR code is checked out).
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited]
+  workflow_dispatch:
+
+concurrency:
+  group: release-drafter-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  # Labels are mutated through the Issues API even for PRs -- without this,
+  # autolabeler's label-add calls 403 silently (no error surfaced in the
+  # release-drafter log), so every PR ships unlabeled and every category
+  # falls through to the flat "What's Changed" list instead of being grouped.
+  issues: write
+
+jobs:
+  # release-drafter's own built-in autolabeler (the `autolabeler:` key in
+  # release-drafter.yml) has been observed to silently apply no labels even
+  # with correct config, permissions and a current action version -- see the
+  # same job in the hacs-* repos, where it was confirmed on live PRs. Label
+  # PRs ourselves instead of depending on it, using the exact same
+  # Conventional-Commit title patterns as the `autolabeler:` config so both
+  # stay in sync.
+  autolabel:
+    name: Label PR from its title
+    if: github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/github-script@v9
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            let label;
+            if (/^feat(\(.+\))?!?:/i.test(title)) {
+              label = "enhancement";
+            } else if (/^(fix|perf|revert)(\(.+\))?!?:/i.test(title)) {
+              label = "fix";
+            } else if (/^(chore|ci|docs|refactor|build|style|test)(\(.+\))?!?:/i.test(title)) {
+              label = "chore";
+            } else {
+              core.info(`No Conventional-Commit prefix matched in title: "${title}"`);
+              return;
+            }
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: [label],
+            });
+            core.info(`Added label "${label}" from title: "${title}"`);
+
+  draft:
+    name: Draft stable release
+    needs: [autolabel]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: release-drafter/release-drafter@v7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  draft-prerelease:
+    name: Draft prerelease (rc)
+    # PR events are only for autolabeling, which the stable job already does.
+    if: github.event_name != 'pull_request_target'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: release-drafter/release-drafter@v7
+        with:
+          config-name: release-drafter-prerelease.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
