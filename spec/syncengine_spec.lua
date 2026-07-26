@@ -596,3 +596,59 @@ describe("SyncEngine.plan_books", function()
         assert.are.equal(0, SyncEngine.plan_size({}))
     end)
 end)
+
+describe("SyncEngine change counting", function()
+    it("counts a re-sent entry with only a new timestamp as touched", function()
+        -- calibre-web bumps one book per sync request, so this used to report
+        -- "Changed: 1" on every run with nothing actually different.
+        local store = new_store()
+        SyncEngine.process_items(store, {
+            { NewEntitlement = entitlement("u1", { title = "A" }) },
+        }, SyncEngine.new_result())
+
+        local result = SyncEngine.new_result()
+        SyncEngine.process_items(store, {
+            { ChangedEntitlement = entitlement("u1", {
+                title = "A", last_modified = "2026-07-27T18:01:23Z",
+            }) },
+        }, result)
+        assert.are.equal(0, result.changed)
+        assert.are.equal(1, result.touched)
+    end)
+
+    it("still counts a real change", function()
+        local store = new_store()
+        SyncEngine.process_items(store, {
+            { NewEntitlement = entitlement("u1", { title = "A" }) },
+        }, SyncEngine.new_result())
+
+        local result = SyncEngine.new_result()
+        SyncEngine.process_items(store, {
+            { ChangedEntitlement = entitlement("u1", { title = "A different title" }) },
+        }, result)
+        assert.are.equal(1, result.changed)
+        assert.are.equal(0, result.touched)
+    end)
+
+    it("counts a changed download size, which decides a re-download", function()
+        local store = new_store()
+        SyncEngine.process_items(store, {
+            { NewEntitlement = entitlement("u1", { size = 1000 }) },
+        }, SyncEngine.new_result())
+
+        local result = SyncEngine.new_result()
+        SyncEngine.process_items(store, {
+            { ChangedEntitlement = entitlement("u1", { size = 2222 }) },
+        }, result)
+        assert.are.equal(1, result.changed)
+    end)
+
+    it("counts a book it has never seen as new, not touched", function()
+        local result = SyncEngine.new_result()
+        SyncEngine.process_items(new_store(), {
+            { NewEntitlement = entitlement("u1") },
+        }, result)
+        assert.are.equal(1, result.new)
+        assert.are.equal(0, result.touched)
+    end)
+end)

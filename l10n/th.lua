@@ -113,6 +113,8 @@ return {
         "รีเซ็ตการซิงค์",
     ["Runs only while Wi-Fi is already on, and only refreshes the catalog: an unattended run never starts downloads, and deletions it finds are held until the next sync you start yourself."] =
         "ทำงานเฉพาะเมื่อเปิด Wi-Fi อยู่แล้ว และรีเฟรชเฉพาะรายการหนังสือเท่านั้น การทำงานอัตโนมัติจะไม่เริ่มดาวน์โหลด และรายการที่ถูกลบจะรอจนกว่าคุณจะสั่งซิงค์ด้วยตนเองครั้งถัดไป",
+    ["Runs the same unattended sync once the device is online, rather than after a fixed wait: catalog only, and given up on if the network has not appeared within five minutes."] =
+        "เริ่มการซิงค์อัตโนมัติแบบเดียวกันทันทีที่เครื่องออนไลน์ แทนที่จะรอตามเวลาที่กำหนดไว้ตายตัว โดยรีเฟรชเฉพาะรายการหนังสือ และจะยกเลิกหากยังไม่มีเครือข่ายภายในห้านาที",
     ["Save"] =
         "บันทึก",
     ["Search"] =
@@ -139,12 +141,16 @@ return {
         "ซิงค์อัตโนมัติ: ทุก %1 นาที",
     ["Sync automatically: off"] =
         "ซิงค์อัตโนมัติ: ปิด",
+    ["Sync when KOReader starts"] =
+        "ซิงค์เมื่อเปิด KOReader",
     ["Synchronize now"] =
         "ซิงค์ตอนนี้",
     ["Synchronizes library and reading progress with a self-hosted Kobo Sync server "] =
         "ซิงค์คลังหนังสือและความคืบหน้าการอ่านกับเซิร์ฟเวอร์ Kobo Sync ที่คุณโฮสต์เอง ",
     ["Text list"] =
         "รายการแบบข้อความ",
+    ["Timestamps refreshed: %1"] =
+        "รีเฟรชเวลาแล้ว: %1",
     ["Upload reading progress when closing a book"] =
         "อัปโหลดความคืบหน้าการอ่านเมื่อปิดหนังสือ",
     ["cannot write to the cover cache"] =

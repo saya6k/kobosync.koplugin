@@ -83,6 +83,15 @@ local function http_request(req)
     return { code = code, headers = headers, body = table.concat(pieces) }
 end
 
+-- A sync at launch waits for the device to be online rather than for a fixed
+-- delay: the wait that matters is the network coming up, and how long that
+-- takes is not something a constant can know. Declared above init, which reads
+-- these: a file-level local is not in scope for a function defined earlier.
+local STARTUP_SYNC_POLL_SECONDS = 10
+-- Stop looking after this long. The interval timer, if one is set, covers
+-- anything later; without it there is nothing to sync to anyway.
+local STARTUP_SYNC_GIVE_UP_SECONDS = 300
+
 function KoboSync:init()
     self.settings = LuaSettings:open(DataStorage:getSettingsDir() .. "/kobosync.lua")
     self.server_url = self.settings:readSetting("server_url")
@@ -92,6 +101,7 @@ function KoboSync:init()
     self.upload_on_close = self.settings:nilOrTrue("upload_on_close")
     -- Minutes between unattended syncs; 0 is off.
     self.sync_interval = tonumber(self.settings:readSetting("sync_interval")) or 0
+    self.sync_on_start = self.settings:isTrue("sync_on_start")
     self.image_url_template = self.settings:readSetting("image_url_template")
     -- "off" | "grid". A cover boxed by a list row stayed too small to be worth
     -- the fetch, so the list variant was dropped; anyone left on it, or on the
@@ -106,10 +116,33 @@ function KoboSync:init()
     self:onDispatcherRegisterActions()
     self.ui.menu:registerToMainMenu(self)
     self:rescheduleSync()
+    if self.sync_on_start then
+        self:syncWhenOnline()
+    end
 end
 
 -- Minutes offered for unattended syncs; 0 turns them off.
 local SYNC_INTERVALS = { 0, 15, 30, 60 }
+
+-- Waits for the network before the launch sync, instead of guessing at a delay.
+-- Nothing here brings Wi-Fi up; it only notices when it is there.
+function KoboSync:syncWhenOnline()
+    local waited = 0
+    local function attempt()
+        -- Re-read the setting each time: it may have been turned off while
+        -- this was waiting.
+        if not self.sync_on_start or not self.server_url then return end
+        if NetworkMgr:isOnline() then
+            self:runScheduledSync()
+            return
+        end
+        waited = waited + STARTUP_SYNC_POLL_SECONDS
+        if waited < STARTUP_SYNC_GIVE_UP_SECONDS then
+            UIManager:scheduleIn(STARTUP_SYNC_POLL_SECONDS, attempt)
+        end
+    end
+    UIManager:scheduleIn(STARTUP_SYNC_POLL_SECONDS, attempt)
+end
 
 function KoboSync:rescheduleSync()
     if self.scheduled_sync then
@@ -178,6 +211,7 @@ function KoboSync:saveSettings()
     self.settings:saveSetting("download_mode", self.download_mode)
     self.settings:saveSetting("upload_on_close", self.upload_on_close)
     self.settings:saveSetting("sync_interval", self.sync_interval)
+    self.settings:saveSetting("sync_on_start", self.sync_on_start)
     self.settings:flush()
 end
 
@@ -374,6 +408,17 @@ function KoboSync:addToMainMenu(menu_items)
                 sub_item_table_func = function() return self:syncIntervalMenu() end,
             },
             {
+                text = _("Sync when KOReader starts"),
+                help_text = _("Runs the same unattended sync once the device is online, "
+                    .. "rather than after a fixed wait: catalog only, and given up on "
+                    .. "if the network has not appeared within five minutes."),
+                checked_func = function() return self.sync_on_start end,
+                callback = function()
+                    self.sync_on_start = not self.sync_on_start
+                    self:saveSettings()
+                end,
+            },
+            {
                 text = _("Upload reading progress when closing a book"),
                 checked_func = function() return self.upload_on_close end,
                 callback = function()
@@ -563,6 +608,11 @@ function KoboSync:reportSync(result, downloaded, failed, pushed, pulled, missing
     end
     if failed > 0 then
         table.insert(lines, T(_("Failed downloads: %1"), failed))
+    end
+    if result.touched > 0 then
+        -- Named for what it is: the server re-sent these with a new timestamp
+        -- and nothing else altered.
+        table.insert(lines, T(_("Timestamps refreshed: %1"), result.touched))
     end
     if missing > 0 then
         table.insert(lines, T(_("Missing locally: %1"), missing))

@@ -113,6 +113,8 @@ return {
         "重設同步",
     ["Runs only while Wi-Fi is already on, and only refreshes the catalog: an unattended run never starts downloads, and deletions it finds are held until the next sync you start yourself."] =
         "僅在 Wi-Fi 已開啟時執行，且只重新整理目錄：自動執行絕不會開始下載，發現的刪除會保留到你下次手動同步時再詢問。",
+    ["Runs the same unattended sync once the device is online, rather than after a fixed wait: catalog only, and given up on if the network has not appeared within five minutes."] =
+        "裝置一連上網路就執行同樣的自動同步，而不是等待固定時間：只重新整理目錄；若五分鐘內仍無網路則放棄。",
     ["Save"] =
         "儲存",
     ["Search"] =
@@ -139,12 +141,16 @@ return {
         "自動同步：每 %1 分鐘",
     ["Sync automatically: off"] =
         "自動同步：關閉",
+    ["Sync when KOReader starts"] =
+        "KOReader 啟動時同步",
     ["Synchronize now"] =
         "立即同步",
     ["Synchronizes library and reading progress with a self-hosted Kobo Sync server "] =
         "與自架 Kobo Sync 伺服器同步書庫與閱讀進度 ",
     ["Text list"] =
         "文字清單",
+    ["Timestamps refreshed: %1"] =
+        "已重新整理時間戳記：%1",
     ["Upload reading progress when closing a book"] =
         "關閉書籍時上傳閱讀進度",
     ["cannot write to the cover cache"] =
