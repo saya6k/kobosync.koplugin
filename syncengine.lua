@@ -176,6 +176,18 @@ function SyncEngine.short_title(title, series_name)
     return rest
 end
 
+-- Collapses a chapter title that repeats its series name down to a single
+-- occurrence. Used for filenames, where stripping the series entirely (as the
+-- browser does) would leave names like "25화" that collide across series and
+-- mean nothing in a file manager.
+function SyncEngine.collapse_series_title(title, series_name)
+    local short = SyncEngine.short_title(title, series_name)
+    if short == title then
+        return title
+    end
+    return series_name .. " " .. short
+end
+
 local function chapter_less(a, b)
     local na, nb = tonumber(a.series_number), tonumber(b.series_number)
     if na and nb then
@@ -271,6 +283,24 @@ end
 -- mode "auto": every book we do not have yet, plus stale re-downloads.
 -- mode "on_demand": stale re-downloads only (of books the user already has).
 -- A downloaded book is stale when the server revision or file size changed.
+-- Clears the downloaded flag on catalog entries whose file is gone, i.e. books
+-- deleted on the device outside the plugin. Left alone they keep their tick in
+-- the browser, count towards a series' downloaded total, and are skipped by the
+-- planner, so automatic mode never fetches them again. `exists` is injected to
+-- keep this module free of KOReader dependencies. Only entries claiming to be
+-- downloaded are probed, so the cost follows the number of local files rather
+-- than the size of the catalog.
+function SyncEngine.reconcile_downloads(store, exists)
+    local reset = 0
+    for _, book in ipairs(store:list_books()) do
+        if book.downloaded and not (book.local_path and exists(book.local_path)) then
+            store:upsert_book(book.uuid, { downloaded = false })
+            reset = reset + 1
+        end
+    end
+    return reset
+end
+
 function SyncEngine.plan_downloads(store, mode)
     local plan = {}
     for _, book in ipairs(store:list_books()) do
