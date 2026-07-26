@@ -59,7 +59,13 @@ jobs:
           files: dist/kobosync.koplugin.zip
       # Keep the default branch in sync so the "Direct download from repo"
       # install path (branch zipball) reports the same version as the release.
+      # Stable releases only: main must not advertise an -rc version, and the
+      # rc track would otherwise walk main's version backwards on the next
+      # stable release. The zip asset still gets the exact tag either way.
+      # Note this pushes straight to main -- protecting the branch without
+      # granting github-actions[bot] a bypass will break this step.
       - name: Sync version to main
+        if: ${{ !github.event.release.prerelease }}
         run: |
           git checkout -- _meta.lua
           git switch -c version-sync origin/main

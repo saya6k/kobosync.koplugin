@@ -1,0 +1,42 @@
+# Prerelease (rc) track: drafts vX.Y.Z-rc.N. With prerelease-identifier set,
+# only the rc suffix increments between published prereleases, so shipping
+# several rcs never consumes stable version numbers -- the stable track
+# (release-drafter.yml) resolves from the last stable release only, and the
+# -rc.N suffix keeps the two tracks' tags from colliding. Keep
+# version-resolver/categories in sync with release-drafter.yml. No autolabeler
+# here: the stable track's job handles PR labeling.
+#
+# appstore.koplugin never offers a prerelease as an update: /releases/latest
+# excludes them, findLatestStableRelease skips the `prerelease` flag, and the
+# "Other releases…" list filters them behind a checkbox. So an rc is only ever
+# installed by someone who goes looking for it.
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+prerelease: true
+prerelease-identifier: "rc"
+categories:
+  - type: "version-resolver"
+    semver-increment: "minor"
+    when:
+      labels: ["enhancement", "feature"]
+  - type: "version-resolver"
+    semver-increment: "patch"
+    when:
+      labels: ["bug", "fix", "chore", "dependencies", "ci"]
+  - type: "version-resolver"
+    semver-increment: "patch"
+  - title: "New Features"
+    when:
+      labels: ["enhancement", "feature"]
+  - title: "Bug Fixes"
+    when:
+      labels: ["bug", "fix"]
+  - title: "Maintenance"
+    when:
+      labels: ["chore", "dependencies", "ci"]
+template: |
+  ## What's Changed
+
+  $CHANGES
+
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION
