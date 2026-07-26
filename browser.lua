@@ -1,5 +1,5 @@
--- Server library browser: lists the synced catalog, downloads a book on tap
--- (when not yet on the device) and opens it in the reader.
+-- Server library browser: lists the synced catalog grouped by series, downloads
+-- a book on tap (when not yet on the device) and opens it in the reader.
 local InfoMessage = require("ui/widget/infomessage")
 local Menu = require("ui/widget/menu")
 local NetworkMgr = require("ui/network/manager")
@@ -13,9 +13,9 @@ local SyncEngine = require("syncengine")
 
 local Browser = {}
 
-local function item_text(book)
+local function standalone_text(book)
     if book.author and book.author ~= "" then
-        return book.title .. " – " .. book.author
+        return (book.title or book.uuid) .. " – " .. book.author
     end
     return book.title or book.uuid
 end
@@ -31,23 +31,52 @@ local function item_mandatory(book)
     return ""
 end
 
-local function build_items(plugin, menu)
-    local books = plugin:getState():list_books()
-    -- Newest on the server first.
-    table.sort(books, function(a, b)
-        return (a.last_modified or "") > (b.last_modified or "")
-    end)
+local function book_item(plugin, menu, book, text)
+    return {
+        text = text,
+        mandatory = item_mandatory(book),
+        callback = function()
+            Browser.openBook(plugin, menu, book)
+        end,
+    }
+end
+
+local show_series_list
+
+-- Second level: the chapters of one series, oldest number first, with the
+-- series name stripped off each title.
+local function show_series(plugin, menu, group)
+    table.insert(menu.paths, group.name)
     local items = {}
-    for _idx, book in ipairs(books) do
+    for _, book in ipairs(group.books) do
+        table.insert(items, book_item(plugin, menu, book,
+            SyncEngine.short_title(book.title, group.name)))
+    end
+    menu:switchItemTable(group.name, items, 1, nil, T(_("%1 books"), #items))
+end
+
+-- Top level: one row per series (with a downloaded/total count), then the books
+-- that belong to no series.
+show_series_list = function(plugin, menu)
+    menu.paths = {}
+    local groups, standalone = SyncEngine.group_by_series(plugin:getState():list_books())
+    local items = {}
+    local total = #standalone
+    for _, group in ipairs(groups) do
+        total = total + #group.books
         table.insert(items, {
-            text = item_text(book),
-            mandatory = item_mandatory(book),
+            text = group.name,
+            mandatory = string.format("%d/%d", group.downloaded, #group.books),
             callback = function()
-                Browser.openBook(plugin, menu, book)
+                show_series(plugin, menu, group)
             end,
         })
     end
-    return items
+    for _, book in ipairs(standalone) do
+        table.insert(items, book_item(plugin, menu, book, standalone_text(book)))
+    end
+    menu:switchItemTable(_("Kobo Sync library"), items, 1, nil,
+        T(_("%1 series, %2 books"), #groups, total))
 end
 
 function Browser.show(plugin)
@@ -59,11 +88,14 @@ function Browser.show(plugin)
         is_borderless = true,
         is_popout = false,
         title_bar_fm_style = true,
+        -- Menu shows its return arrow whenever onReturn is set, and enables it
+        -- while paths is non-empty -- so this is the way back out of a series.
+        onReturn = function()
+            show_series_list(plugin, menu)
+        end,
     }
-    menu.item_table = build_items(plugin, menu)
-    menu.subtitle = T(_("%1 books"), #menu.item_table)
     UIManager:show(menu)
-    menu:switchItemTable(menu.title, menu.item_table, 1, nil, menu.subtitle)
+    show_series_list(plugin, menu)
 end
 
 function Browser.openBook(plugin, menu, book)

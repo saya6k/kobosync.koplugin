@@ -127,6 +127,99 @@ local function utf8_truncate(s, max_bytes)
     return table.concat(out)
 end
 
+-- Separators calibre-web puts between a series name and the chapter part.
+-- Matched as literal byte prefixes, not a Lua character class: the dashes are
+-- multi-byte UTF-8 and a class would match their individual bytes.
+local TITLE_SEPARATORS = { "-", "–", "—", ":", "·", "|" }
+
+local function strip_leading_separator(s)
+    s = s:gsub("^%s+", "")
+    for _, sep in ipairs(TITLE_SEPARATORS) do
+        if s:sub(1, #sep) == sep then
+            s = s:sub(#sep + 1)
+            break
+        end
+    end
+    return (s:gsub("^%s+", ""))
+end
+
+-- Whether what follows the series name is a boundary rather than more of a
+-- word. Without this a one-character series name would eat into every title
+-- that merely starts with the same letter.
+local function at_boundary(s)
+    if s == "" or s:match("^%s") then
+        return true
+    end
+    for _, sep in ipairs(TITLE_SEPARATORS) do
+        if s:sub(1, #sep) == sep then
+            return true
+        end
+    end
+    return false
+end
+
+-- Drops the series name from the front of a chapter title. calibre-web repeats
+-- it, sometimes twice ("<series> - <series> 25화"), which makes a chapter list
+-- unreadable. Returns what is left ("25화"), or the title unchanged when
+-- stripping would leave nothing.
+function SyncEngine.short_title(title, series_name)
+    if not title or title == "" then return title end
+    if not series_name or series_name == "" then return title end
+    local rest = title
+    while rest:sub(1, #series_name) == series_name do
+        local tail = rest:sub(#series_name + 1)
+        if not at_boundary(tail) then break end
+        local stripped = strip_leading_separator(tail)
+        if stripped == "" then break end
+        rest = stripped
+    end
+    return rest
+end
+
+local function chapter_less(a, b)
+    local na, nb = tonumber(a.series_number), tonumber(b.series_number)
+    if na and nb then
+        if na ~= nb then return na < nb end
+    elseif na then
+        return true
+    elseif nb then
+        return false
+    end
+    return (a.title or "") < (b.title or "")
+end
+
+-- Splits a catalog listing into series (chapters ordered by Series.Number) and
+-- the books that carry no series. Both are name-sorted, so the browser shows a
+-- stable order rather than the server's modification order.
+function SyncEngine.group_by_series(books)
+    local by_name = {}
+    local groups = {}
+    local standalone = {}
+    for _, book in ipairs(books) do
+        local name = book.series_name
+        if name and name ~= "" then
+            local group = by_name[name]
+            if not group then
+                group = { name = name, books = {}, downloaded = 0 }
+                by_name[name] = group
+                table.insert(groups, group)
+            end
+            table.insert(group.books, book)
+            if book.downloaded then
+                group.downloaded = group.downloaded + 1
+            end
+        else
+            table.insert(standalone, book)
+        end
+    end
+    for _, group in ipairs(groups) do
+        table.sort(group.books, chapter_less)
+    end
+    table.sort(groups, function(a, b) return a.name < b.name end)
+    table.sort(standalone, function(a, b) return (a.title or "") < (b.title or "") end)
+    return groups, standalone
+end
+
 -- "<Title> - <Author>" with filesystem-hostile characters replaced.
 function SyncEngine.sanitize_filename(title, author)
     local base = title or "Untitled"
