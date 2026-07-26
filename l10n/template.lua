@@ -43,8 +43,8 @@ return {
         "Jump",
     ["Keep"] =
         "Keep",
-    ["Keep every book on this device"] =
-        "Keep every book on this device",
+    ["Keep every book on this device: %1"] =
+        "Keep every book on this device: %1",
     ["Kobo Sync"] =
         "Kobo Sync",
     ["Kobo Sync failed: %1"] =
@@ -107,6 +107,8 @@ return {
         "Not now",
     ["Off"] =
         "Off",
+    ["On"] =
+        "On",
     ["Reading progress: %1 sent, %2 received"] =
         "Reading progress: %1 sent, %2 received",
     ["Reset"] =
@@ -143,16 +145,16 @@ return {
         "Sync automatically: every %1 minutes",
     ["Sync automatically: off"] =
         "Sync automatically: off",
-    ["Sync when KOReader starts"] =
-        "Sync when KOReader starts",
+    ["Sync when KOReader starts: %1"] =
+        "Sync when KOReader starts: %1",
     ["Synchronize now"] =
         "Synchronize now",
     ["Synchronizes library and reading progress with a self-hosted Kobo Sync server "] =
         "Synchronizes library and reading progress with a self-hosted Kobo Sync server ",
     ["Text list"] =
         "Text list",
-    ["Upload reading progress when closing a book"] =
-        "Upload reading progress when closing a book",
+    ["Upload reading progress when closing a book: %1"] =
+        "Upload reading progress when closing a book: %1",
     ["cannot write to the cover cache"] =
         "cannot write to the cover cache",
     ["never"] =

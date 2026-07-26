@@ -43,8 +43,8 @@ return {
         "انتقال",
     ["Keep"] =
         "إبقاء",
-    ["Keep every book on this device"] =
-        "الاحتفاظ بكل كتاب على هذا الجهاز",
+    ["Keep every book on this device: %1"] =
+        "الاحتفاظ بكل كتاب على هذا الجهاز: %1",
     ["Kobo Sync"] =
         "Kobo Sync",
     ["Kobo Sync failed: %1"] =
@@ -107,6 +107,8 @@ return {
         "ليس الآن",
     ["Off"] =
         "معطّل",
+    ["On"] =
+        "تشغيل",
     ["Reading progress: %1 sent, %2 received"] =
         "تقدم القراءة: أُرسل %1، ووصل %2",
     ["Reset"] =
@@ -143,16 +145,16 @@ return {
         "مزامنة تلقائية: كل %1 دقيقة",
     ["Sync automatically: off"] =
         "مزامنة تلقائية: معطّلة",
-    ["Sync when KOReader starts"] =
-        "المزامنة عند بدء تشغيل KOReader",
+    ["Sync when KOReader starts: %1"] =
+        "المزامنة عند بدء تشغيل KOReader: %1",
     ["Synchronize now"] =
         "مزامنة الآن",
     ["Synchronizes library and reading progress with a self-hosted Kobo Sync server "] =
         "يزامن المكتبة وتقدم القراءة مع خادم Kobo Sync مُستضاف ذاتيًا ",
     ["Text list"] =
         "قائمة نصية",
-    ["Upload reading progress when closing a book"] =
-        "رفع تقدم القراءة عند إغلاق كتاب",
+    ["Upload reading progress when closing a book: %1"] =
+        "رفع تقدم القراءة عند إغلاق كتاب: %1",
     ["cannot write to the cover cache"] =
         "تعذّرت الكتابة في ذاكرة الأغلفة",
     ["never"] =

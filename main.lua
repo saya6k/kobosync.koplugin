@@ -218,6 +218,24 @@ function KoboSync:saveSettings()
     self.settings:flush()
 end
 
+-- The tick KOReader puts on a checked menu row is the glyph U+2713, drawn in
+-- the UI font. A UI font without it -- a plugin that restyles the menu with a
+-- reading typeface, say -- leaves the box blank whether the setting is on or
+-- off, so these rows say their state in words instead, the way the sync
+-- interval row already does.
+function KoboSync:onOffText(enabled)
+    return enabled and _("On") or _("Off")
+end
+
+-- A row without checked_func gets no automatic redraw, and its label is what
+-- carries the value, so the menu is asked to rebuild it. TouchMenu passes
+-- itself to the callback for exactly this.
+function KoboSync:refreshMenu(touchmenu_instance)
+    if touchmenu_instance then
+        touchmenu_instance:updateItems()
+    end
+end
+
 function KoboSync:lastSyncText()
     if not self.last_sync then
         return _("never")
@@ -402,18 +420,19 @@ function KoboSync:addToMainMenu(menu_items)
                 -- takes: it fetches every book the catalog lists and the device
                 -- lacks, which on a first sync is the entire library, not just
                 -- what arrived since last time.
-                text = _("Keep every book on this device"),
+                text_func = function()
+                    return T(_("Keep every book on this device: %1"),
+                        self:onOffText(self.download_mode == "auto"))
+                end,
                 help_text = _("Downloads every book in the library and fetches new ones as "
                     .. "they arrive; on a first sync that means the whole library. "
                     .. "When disabled, syncing only updates the catalog and books are "
                     .. "downloaded one at a time from the server library browser."),
-                -- A checkbox that closes the menu on tap never shows the box it
-                -- just ticked, which reads as if nothing happened.
                 keep_menu_open = true,
-                checked_func = function() return self.download_mode == "auto" end,
-                callback = function()
+                callback = function(touchmenu_instance)
                     self.download_mode = self.download_mode == "auto" and "on_demand" or "auto"
                     self:saveSettings()
+                    self:refreshMenu(touchmenu_instance)
                 end,
             },
             {
@@ -429,24 +448,29 @@ function KoboSync:addToMainMenu(menu_items)
                 sub_item_table_func = function() return self:syncIntervalMenu() end,
             },
             {
-                text = _("Sync when KOReader starts"),
+                text_func = function()
+                    return T(_("Sync when KOReader starts: %1"), self:onOffText(self.sync_on_start))
+                end,
                 help_text = _("Runs the same unattended sync once the device is online, "
                     .. "rather than after a fixed wait: catalog only, and given up on "
                     .. "if the network has not appeared within five minutes."),
                 keep_menu_open = true,
-                checked_func = function() return self.sync_on_start end,
-                callback = function()
+                callback = function(touchmenu_instance)
                     self.sync_on_start = not self.sync_on_start
                     self:saveSettings()
+                    self:refreshMenu(touchmenu_instance)
                 end,
             },
             {
-                text = _("Upload reading progress when closing a book"),
+                text_func = function()
+                    return T(_("Upload reading progress when closing a book: %1"),
+                        self:onOffText(self.upload_on_close))
+                end,
                 keep_menu_open = true,
-                checked_func = function() return self.upload_on_close end,
-                callback = function()
+                callback = function(touchmenu_instance)
                     self.upload_on_close = not self.upload_on_close
                     self:saveSettings()
+                    self:refreshMenu(touchmenu_instance)
                 end,
                 separator = true,
             },

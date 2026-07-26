@@ -43,8 +43,8 @@ return {
         "移動",
     ["Keep"] =
         "保持",
-    ["Keep every book on this device"] =
-        "このデバイスにすべての本を保持",
+    ["Keep every book on this device: %1"] =
+        "このデバイスにすべての本を保持: %1",
     ["Kobo Sync"] =
         "Kobo Sync",
     ["Kobo Sync failed: %1"] =
@@ -107,6 +107,8 @@ return {
         "後で",
     ["Off"] =
         "オフ",
+    ["On"] =
+        "オン",
     ["Reading progress: %1 sent, %2 received"] =
         "読書進捗: %1 件送信、%2 件受信",
     ["Reset"] =
@@ -143,16 +145,16 @@ return {
         "自動同期: %1 分ごと",
     ["Sync automatically: off"] =
         "自動同期: オフ",
-    ["Sync when KOReader starts"] =
-        "KOReader の起動時に同期",
+    ["Sync when KOReader starts: %1"] =
+        "KOReader の起動時に同期: %1",
     ["Synchronize now"] =
         "今すぐ同期",
     ["Synchronizes library and reading progress with a self-hosted Kobo Sync server "] =
         "セルフホストの Kobo Sync サーバーとライブラリおよび読書進捗を同期します ",
     ["Text list"] =
         "テキスト一覧",
-    ["Upload reading progress when closing a book"] =
-        "本を閉じるときに読書進捗をアップロード",
+    ["Upload reading progress when closing a book: %1"] =
+        "本を閉じるときに読書進捗をアップロード: %1",
     ["cannot write to the cover cache"] =
         "表紙キャッシュに書き込めません",
     ["never"] =
