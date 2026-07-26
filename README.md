@@ -48,6 +48,16 @@ busted spec/
 
 Pure-logic modules (`koboapi.lua`, `syncengine.lua`, `readingstate.lua`, `statestore.lua`) have no KOReader dependencies and are covered by the busted suite; `main.lua` and `browser.lua` integrate with KOReader.
 
+## Releasing
+
+Releases are cut from GitHub, not from a local tag — pushing a tag on its own builds nothing.
+
+1. Merge PRs with Conventional Commit titles (`feat:`, `fix:`, `chore:`); they get labelled automatically and collected into a draft release, which also resolves the next version number
+2. Publish the draft from the releases page
+3. CI writes the tag's version into `_meta.lua`, builds the zip, attaches it to the release, and commits the same version back to `main`
+
+There is a parallel `-rc.N` draft for prereleases. Publishing one attaches a zip as usual but leaves `main` untouched, and appstore.koplugin never offers a prerelease as an update.
+
 ## License
 
 [AGPL-3.0](LICENSE), same as KOReader.
