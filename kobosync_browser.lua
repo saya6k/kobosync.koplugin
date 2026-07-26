@@ -129,7 +129,11 @@ local function show_series_list(plugin, menu)
         table.insert(items, {
             text = group.name,
             mandatory = string.format("%d/%d", group.downloaded, #group.books),
-            -- Held to download the whole series; see onMenuHold.
+            -- The series stands for its first chapter as far as the cover is
+            -- concerned; the group is what a hold acts on. Both are needed:
+            -- dropping the book left every series in the grid with an empty
+            -- cover box.
+            kobosync_book = group.books[1],
             kobosync_group = group,
             callback = function()
                 show_series(plugin, menu, group)
