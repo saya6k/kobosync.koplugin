@@ -220,6 +220,32 @@ function SyncEngine.group_by_series(books)
     return groups, standalone
 end
 
+-- Narrows a catalog listing before it is grouped for display. `query` matches
+-- title and series name as a case-insensitive substring -- string.lower only
+-- touches ASCII bytes, so UTF-8 titles pass through untouched and still match
+-- literally.
+function SyncEngine.filter_books(books, opts)
+    opts = opts or {}
+    local needle = opts.query
+    if needle == "" then needle = nil end
+    needle = needle and needle:lower()
+    local out = {}
+    for _, book in ipairs(books) do
+        local keep = true
+        if opts.downloaded_only and not book.downloaded then
+            keep = false
+        end
+        if keep and needle then
+            local haystack = ((book.title or "") .. " " .. (book.series_name or "")):lower()
+            keep = haystack:find(needle, 1, true) ~= nil
+        end
+        if keep then
+            table.insert(out, book)
+        end
+    end
+    return out
+end
+
 -- "<Title> - <Author>" with filesystem-hostile characters replaced.
 function SyncEngine.sanitize_filename(title, author)
     local base = title or "Untitled"

@@ -1,6 +1,8 @@
 -- Server library browser: lists the synced catalog grouped by series, downloads
 -- a book on tap (when not yet on the device) and opens it in the reader.
+local ButtonDialog = require("ui/widget/buttondialog")
 local InfoMessage = require("ui/widget/infomessage")
+local InputDialog = require("ui/widget/inputdialog")
 local Menu = require("ui/widget/menu")
 local NetworkMgr = require("ui/network/manager")
 local UIManager = require("ui/uimanager")
@@ -41,7 +43,22 @@ local function book_item(plugin, menu, book, text)
     }
 end
 
-local show_series_list
+-- The catalog as the current search/filter selection sees it.
+local function visible_books(plugin, menu)
+    return SyncEngine.filter_books(plugin:getState():list_books(), {
+        query = menu.kobosync_query,
+        downloaded_only = menu.kobosync_downloaded_only,
+    })
+end
+
+local function filter_note(menu)
+    if menu.kobosync_downloaded_only then
+        return " " .. _("(downloaded only)")
+    end
+    return ""
+end
+
+local show_top
 
 -- Second level: the chapters of one series, oldest number first, with the
 -- series name stripped off each title.
@@ -52,14 +69,36 @@ local function show_series(plugin, menu, group)
         table.insert(items, book_item(plugin, menu, book,
             SyncEngine.short_title(book.title, group.name)))
     end
-    menu:switchItemTable(group.name, items, 1, nil, T(_("%1 books"), #items))
+    menu:switchItemTable(group.name, items, 1, nil,
+        T(_("%1 books"), #items) .. filter_note(menu))
+end
+
+-- Search results are flat: grouping a handful of hits behind series rows would
+-- just add a tap. Ordering still comes from the grouper, so chapters of one
+-- series stay together and in number order.
+local function show_search_results(plugin, menu)
+    local groups, standalone = SyncEngine.group_by_series(visible_books(plugin, menu))
+    local items = {}
+    for _, group in ipairs(groups) do
+        for _, book in ipairs(group.books) do
+            table.insert(items, book_item(plugin, menu, book,
+                group.name .. " · " .. SyncEngine.short_title(book.title, group.name)))
+        end
+    end
+    for _, book in ipairs(standalone) do
+        table.insert(items, book_item(plugin, menu, book, standalone_text(book)))
+    end
+    -- Non-empty paths is what enables Menu's return arrow.
+    menu.paths = { menu.kobosync_query }
+    menu:switchItemTable(T(_("Search: %1"), menu.kobosync_query), items, 1, nil,
+        T(_("%1 books"), #items) .. filter_note(menu))
 end
 
 -- Top level: one row per series (with a downloaded/total count), then the books
 -- that belong to no series.
-show_series_list = function(plugin, menu)
+local function show_series_list(plugin, menu)
     menu.paths = {}
-    local groups, standalone = SyncEngine.group_by_series(plugin:getState():list_books())
+    local groups, standalone = SyncEngine.group_by_series(visible_books(plugin, menu))
     local items = {}
     local total = #standalone
     for _, group in ipairs(groups) do
@@ -76,7 +115,69 @@ show_series_list = function(plugin, menu)
         table.insert(items, book_item(plugin, menu, book, standalone_text(book)))
     end
     menu:switchItemTable(_("Kobo Sync library"), items, 1, nil,
-        T(_("%1 series, %2 books"), #groups, total))
+        T(_("%1 series, %2 books"), #groups, total) .. filter_note(menu))
+end
+
+show_top = function(plugin, menu)
+    if menu.kobosync_query then
+        show_search_results(plugin, menu)
+    else
+        show_series_list(plugin, menu)
+    end
+end
+
+local function show_search_dialog(plugin, menu)
+    local dialog
+    dialog = InputDialog:new{
+        title = _("Search the server library"),
+        input = menu.kobosync_query or "",
+        description = _("Matches book titles and series names."),
+        buttons = {{
+            {
+                text = _("Cancel"),
+                id = "close",
+                callback = function() UIManager:close(dialog) end,
+            },
+            {
+                text = _("Search"),
+                is_enter_default = true,
+                callback = function()
+                    local query = dialog:getInputText()
+                    UIManager:close(dialog)
+                    menu.kobosync_query = query ~= "" and query or nil
+                    show_top(plugin, menu)
+                end,
+            },
+        }},
+    }
+    UIManager:show(dialog)
+    dialog:onShowKeyboard()
+end
+
+local function show_filter_menu(plugin, menu)
+    local dialog
+    local downloaded_label = menu.kobosync_downloaded_only
+        and _("Show all books") or _("Show downloaded only")
+    dialog = ButtonDialog:new{
+        buttons = {
+            {{
+                text = _("Search…"),
+                callback = function()
+                    UIManager:close(dialog)
+                    show_search_dialog(plugin, menu)
+                end,
+            }},
+            {{
+                text = downloaded_label,
+                callback = function()
+                    UIManager:close(dialog)
+                    menu.kobosync_downloaded_only = not menu.kobosync_downloaded_only
+                    show_top(plugin, menu)
+                end,
+            }},
+        },
+    }
+    UIManager:show(dialog)
 end
 
 function Browser.show(plugin)
@@ -88,14 +189,20 @@ function Browser.show(plugin)
         is_borderless = true,
         is_popout = false,
         title_bar_fm_style = true,
+        title_bar_left_icon = "appbar.menu",
         -- Menu shows its return arrow whenever onReturn is set, and enables it
-        -- while paths is non-empty -- so this is the way back out of a series.
+        -- while paths is non-empty. Search results are flat and a series has no
+        -- deeper level, so one step always lands back on the series list.
         onReturn = function()
-            show_series_list(plugin, menu)
+            menu.kobosync_query = nil
+            show_top(plugin, menu)
         end,
     }
+    menu.onLeftButtonTap = function()
+        show_filter_menu(plugin, menu)
+    end
     UIManager:show(menu)
-    show_series_list(plugin, menu)
+    show_top(plugin, menu)
 end
 
 function Browser.openBook(plugin, menu, book)
