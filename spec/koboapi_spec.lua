@@ -152,3 +152,53 @@ describe("KoboApi.download", function()
         assert.are.equal("HTTP 404", err)
     end)
 end)
+
+describe("KoboApi.sync cancellation", function()
+    it("passes the page number to on_page", function()
+        local api = api_with({
+            { code = 200, headers = { ["x-kobo-synctoken"] = "t1", ["x-kobo-sync"] = "continue" }, body = "[]" },
+            { code = 200, headers = { ["x-kobo-synctoken"] = "t2" }, body = "[]" },
+        })
+        local pages = {}
+        api:sync(nil, function(_items, page) table.insert(pages, page) end)
+        assert.are.same({ 1, 2 }, pages)
+    end)
+
+    it("stops walking when on_page returns false, keeping the token so far", function()
+        local api, calls = api_with({
+            { code = 200, headers = { ["x-kobo-synctoken"] = "t1", ["x-kobo-sync"] = "continue" }, body = "[]" },
+            { code = 200, headers = { ["x-kobo-synctoken"] = "t2", ["x-kobo-sync"] = "continue" }, body = "[]" },
+        })
+        local seen = 0
+        local token = api:sync(nil, function()
+            seen = seen + 1
+            return false
+        end)
+        assert.are.equal(1, seen)
+        assert.are.equal(1, #calls)
+        -- The token of the consumed page, so the next run resumes here.
+        assert.are.equal("t1", token)
+    end)
+
+    it("keeps going when on_page returns nil, as callers that ignore it do", function()
+        local api, calls = api_with({
+            { code = 200, headers = { ["x-kobo-synctoken"] = "t1", ["x-kobo-sync"] = "continue" }, body = "[]" },
+            { code = 200, headers = { ["x-kobo-synctoken"] = "t2" }, body = "[]" },
+        })
+        local token = api:sync(nil, function() end)
+        assert.are.equal(2, #calls)
+        assert.are.equal("t2", token)
+    end)
+end)
+
+describe("KoboApi.get_initialization", function()
+    it("asks the resource endpoint and decodes it", function()
+        local api, calls = api_with({
+            { code = 200, headers = {}, body = '{"Resources":{"image_url_template":"https://s/{ImageId}"}}' },
+        })
+        local init = api:get_initialization()
+        assert.are.equal("https://example.com/kobo/token123/v1/initialization", calls[1].url)
+        assert.are.equal("GET", calls[1].method)
+        assert.are.equal("https://s/{ImageId}", init.Resources.image_url_template)
+    end)
+end)

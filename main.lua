@@ -257,8 +257,17 @@ function KoboSync:doSync()
     local api = self:getApi()
     local first_sync = state:get_synctoken() == nil
     local result = SyncEngine.new_result()
-    local token, err, partial_token = api:sync(state:get_synctoken(), function(items)
+    local seen, cancelled = 0, false
+    local token, err, partial_token = api:sync(state:get_synctoken(), function(items, page)
         SyncEngine.process_items(state, items, result)
+        seen = seen + #items
+        -- The protocol sends no total, so this counts up instead of filling a
+        -- bar. Trapper:info also yields, which lets the screen repaint between
+        -- pages -- without it a first sync of a large library looks like a hang.
+        if not Trapper:info(T(_("Kobo Sync: %1 items, page %2…\n\nTap to stop."), seen, page)) then
+            cancelled = true
+            return false
+        end
     end)
     -- Keep progress from already processed pages even on a failed run.
     state:set_synctoken(token or partial_token or state:get_synctoken())
@@ -267,6 +276,16 @@ function KoboSync:doSync()
         Trapper:clear()
         UIManager:show(InfoMessage:new{
             text = T(_("Kobo Sync failed: %1"), err or _("unknown error")),
+        })
+        return
+    end
+    if cancelled then
+        -- The token covers the pages that were consumed, so the next run picks
+        -- up where this one stopped rather than starting over.
+        Trapper:clear()
+        UIManager:show(InfoMessage:new{
+            text = T(_("Kobo Sync stopped.\nNew: %1  Changed: %2\n\nThe next sync resumes from here."),
+                result.new, result.changed),
         })
         return
     end

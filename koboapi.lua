@@ -57,13 +57,15 @@ function KoboApi:_request_json(method, path, body)
     return decoded, nil, resp
 end
 
--- Incremental library sync. Calls on_page(items) for every page received.
+-- Incremental library sync. Calls on_page(items, page_number) for every page
+-- received; returning false from it stops the walk and returns the token for
+-- the pages consumed so far, so a cancelled sync resumes rather than restarts.
 -- The sync token is treated as an opaque string: sent as-is, stored as-is.
 -- Returns the newest sync token, or nil, err (the token from already
 -- processed pages is returned as the third value so progress is not lost).
 function KoboApi:sync(synctoken, on_page)
     local token = synctoken
-    for _ = 1, MAX_SYNC_PAGES do
+    for page = 1, MAX_SYNC_PAGES do
         local req = {
             url = self.base_url .. "/v1/library/sync",
             method = "GET",
@@ -83,8 +85,11 @@ function KoboApi:sync(synctoken, on_page)
         if not ok or type(items) ~= "table" then
             return nil, "invalid JSON in sync response", token
         end
-        on_page(items)
+        local go_on = on_page(items, page)
         token = get_header(resp.headers, SYNC_TOKEN_HEADER) or token
+        if go_on == false then
+            return token
+        end
         if get_header(resp.headers, SYNC_CONTINUE_HEADER) ~= "continue" then
             return token
         end
