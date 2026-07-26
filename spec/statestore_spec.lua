@@ -103,3 +103,56 @@ describe("StateStore", function()
         assert.are.equal("B", seen["uuid-2"])
     end)
 end)
+
+describe("StateStore pending deletions", function()
+    it("queues candidates and survives a reload", function()
+        local path = os.tmpname()
+        os.remove(path)
+        local store = StateStore.new{ path = path, json = json }
+        store:queue_deletions({
+            { uuid = "u1", title = "A", local_path = "/b/a.epub" },
+            { uuid = "u2", title = "B" },
+        })
+        assert.is_truthy(store:save())
+
+        local reloaded = StateStore.new{ path = path, json = json }
+        local queued = reloaded:pending_deletions()
+        assert.are.equal(2, #queued)
+        assert.are.equal("u1", queued[1].uuid)
+        assert.are.equal("/b/a.epub", queued[1].local_path)
+        os.remove(path)
+    end)
+
+    it("does not queue the same book twice", function()
+        local path = os.tmpname()
+        os.remove(path)
+        local store = StateStore.new{ path = path, json = json }
+        store:queue_deletions({ { uuid = "u1", title = "A" } })
+        store:queue_deletions({ { uuid = "u1", title = "A" }, { uuid = "u2" } })
+        assert.are.equal(2, #store:pending_deletions())
+        os.remove(path)
+    end)
+
+    it("starts empty and clears", function()
+        local path = os.tmpname()
+        os.remove(path)
+        local store = StateStore.new{ path = path, json = json }
+        assert.are.equal(0, #store:pending_deletions())
+        store:queue_deletions({ { uuid = "u1" } })
+        store:clear_pending_deletions()
+        assert.are.equal(0, #store:pending_deletions())
+        os.remove(path)
+    end)
+
+    it("tolerates a store written before deletions were queued", function()
+        local path = os.tmpname()
+        local f = io.open(path, "w")
+        f:write(json.encode({ version = 1, books = {}, pending_states = {} }))
+        f:close()
+        local store = StateStore.new{ path = path, json = json }
+        assert.are.equal(0, #store:pending_deletions())
+        store:queue_deletions({ { uuid = "u1" } })
+        assert.are.equal(1, #store:pending_deletions())
+        os.remove(path)
+    end)
+end)

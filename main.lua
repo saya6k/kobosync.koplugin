@@ -7,6 +7,7 @@ local InfoMessage = require("ui/widget/infomessage")
 local InputDialog = require("ui/widget/inputdialog")
 local LuaSettings = require("luasettings")
 local NetworkMgr = require("ui/network/manager")
+local Notification = require("ui/widget/notification")
 local Trapper = require("ui/trapper")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
@@ -89,6 +90,8 @@ function KoboSync:init()
         or DataStorage:getDataDir() .. "/kobosync"
     self.download_mode = self.settings:readSetting("download_mode") or "auto"
     self.upload_on_close = self.settings:nilOrTrue("upload_on_close")
+    -- Minutes between unattended syncs; 0 is off.
+    self.sync_interval = tonumber(self.settings:readSetting("sync_interval")) or 0
     self.image_url_template = self.settings:readSetting("image_url_template")
     -- "off" | "grid". A cover boxed by a list row stayed too small to be worth
     -- the fetch, so the list variant was dropped; anyone left on it, or on the
@@ -102,6 +105,62 @@ function KoboSync:init()
     self.cover_dir = DataStorage:getDataDir() .. "/cache/kobosync"
     self:onDispatcherRegisterActions()
     self.ui.menu:registerToMainMenu(self)
+    self:rescheduleSync()
+end
+
+-- Minutes offered for unattended syncs; 0 turns them off.
+local SYNC_INTERVALS = { 0, 15, 30, 60 }
+
+function KoboSync:rescheduleSync()
+    if self.scheduled_sync then
+        UIManager:unschedule(self.scheduled_sync)
+        self.scheduled_sync = nil
+    end
+    if not self.server_url or self.sync_interval <= 0 then
+        return
+    end
+    self.scheduled_sync = function() self:runScheduledSync() end
+    UIManager:scheduleIn(self.sync_interval * 60, self.scheduled_sync)
+end
+
+function KoboSync:runScheduledSync()
+    -- Re-arm first: a run that is skipped, or one that fails, must not end the
+    -- schedule.
+    self:rescheduleSync()
+    if self.syncing or not self.server_url then
+        return
+    end
+    -- Never bring the network up. Newer Android forbids an app turning Wi-Fi on
+    -- at all, and doing it unasked is not what an unattended sync should mean.
+    if not NetworkMgr:isOnline() then
+        return
+    end
+    Trapper:wrap(function()
+        self.syncing = true
+        local ok, err = pcall(function() self:doSync{ scheduled = true } end)
+        self.syncing = false
+        self:hideSyncIndicator()
+        if not ok then
+            logger.warn("KoboSync: scheduled sync failed:", err)
+        end
+    end)
+end
+
+function KoboSync:syncIntervalMenu()
+    local items = {}
+    for _idx, minutes in ipairs(SYNC_INTERVALS) do
+        table.insert(items, {
+            text = minutes == 0 and _("Off") or T(_("Every %1 minutes"), minutes),
+            checked_func = function() return self.sync_interval == minutes end,
+            radio = true,
+            callback = function()
+                self.sync_interval = minutes
+                self:saveSettings()
+                self:rescheduleSync()
+            end,
+        })
+    end
+    return items
 end
 
 function KoboSync:onDispatcherRegisterActions()
@@ -118,6 +177,7 @@ function KoboSync:saveSettings()
     self.settings:saveSetting("download_dir", self.download_dir)
     self.settings:saveSetting("download_mode", self.download_mode)
     self.settings:saveSetting("upload_on_close", self.upload_on_close)
+    self.settings:saveSetting("sync_interval", self.sync_interval)
     self.settings:flush()
 end
 
@@ -302,6 +362,18 @@ function KoboSync:addToMainMenu(menu_items)
                 end,
             },
             {
+                text_func = function()
+                    if self.sync_interval > 0 then
+                        return T(_("Sync automatically: every %1 minutes"), self.sync_interval)
+                    end
+                    return _("Sync automatically: off")
+                end,
+                help_text = _("Runs only while Wi-Fi is already on, and only refreshes the "
+                    .. "catalog: an unattended run never starts downloads, and deletions it "
+                    .. "finds are held until the next sync you start yourself."),
+                sub_item_table_func = function() return self:syncIntervalMenu() end,
+            },
+            {
                 text = _("Upload reading progress when closing a book"),
                 checked_func = function() return self.upload_on_close end,
                 callback = function()
@@ -388,7 +460,8 @@ function KoboSync:onKoboSyncSync()
     return true
 end
 
-function KoboSync:doSync()
+function KoboSync:doSync(opts)
+    opts = opts or {}
     local state = self:getState()
     local api = self:getApi()
     local first_sync = state:get_synctoken() == nil
@@ -450,6 +523,15 @@ function KoboSync:doSync()
         state:save()
     end
 
+    -- A scheduled run only refreshes the catalog: it must not put a download
+    -- confirmation, or a deletion one, in front of someone who is reading.
+    if opts.scheduled then
+        state:queue_deletions(result.delete_candidates)
+        state:save()
+        self:reportSync(result, 0, 0, pushed, pulled, missing, true)
+        return
+    end
+
     local plan = SyncEngine.plan_downloads(state, self.download_mode)
     self:maybeConfirmDownloads(plan, first_sync, function(confirmed)
         local downloaded, failed = 0, 0
@@ -457,25 +539,43 @@ function KoboSync:doSync()
             downloaded, failed = self:downloadPlanned(state, api, plan)
             state:save()
         end
-        self:confirmDeletions(state, result.delete_candidates, function()
-            local lines = {
-                T(_("Kobo Sync finished.\nNew: %1  Changed: %2"), result.new, result.changed),
-            }
-            if downloaded > 0 then
-                table.insert(lines, T(_("Downloaded: %1"), downloaded))
-            end
-            if failed > 0 then
-                table.insert(lines, T(_("Failed downloads: %1"), failed))
-            end
-            if missing > 0 then
-                table.insert(lines, T(_("Missing locally: %1"), missing))
-            end
-            if pushed > 0 or pulled > 0 then
-                table.insert(lines, T(_("Reading progress: %1 sent, %2 received"), pushed, pulled))
-            end
-            UIManager:show(InfoMessage:new{ text = table.concat(lines, "\n") })
+        -- Anything a scheduled run could not ask about is answered here.
+        local candidates = state:pending_deletions()
+        for _idx, candidate in ipairs(result.delete_candidates) do
+            table.insert(candidates, candidate)
+        end
+        self:confirmDeletions(state, candidates, function()
+            state:clear_pending_deletions()
+            state:save()
+            self:reportSync(result, downloaded, failed, pushed, pulled, missing, false)
         end)
     end)
+end
+
+-- A scheduled run reports through a toast: it neither covers the page being
+-- read nor waits to be dismissed.
+function KoboSync:reportSync(result, downloaded, failed, pushed, pulled, missing, quiet)
+    local lines = {
+        T(_("Kobo Sync finished.\nNew: %1  Changed: %2"), result.new, result.changed),
+    }
+    if downloaded > 0 then
+        table.insert(lines, T(_("Downloaded: %1"), downloaded))
+    end
+    if failed > 0 then
+        table.insert(lines, T(_("Failed downloads: %1"), failed))
+    end
+    if missing > 0 then
+        table.insert(lines, T(_("Missing locally: %1"), missing))
+    end
+    if pushed > 0 or pulled > 0 then
+        table.insert(lines, T(_("Reading progress: %1 sent, %2 received"), pushed, pulled))
+    end
+    local text = table.concat(lines, "\n")
+    if quiet then
+        UIManager:show(Notification:new{ text = text:gsub("\n", "  ") })
+    else
+        UIManager:show(InfoMessage:new{ text = text })
+    end
 end
 
 -- Bulk downloads are opt-in: ask on the first sync and for mass changes.
