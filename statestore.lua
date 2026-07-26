@@ -15,6 +15,7 @@ local function empty_data()
         synctoken = nil,
         books = {},
         pending_states = {},
+        pending_deletions = {},
     }
 end
 
@@ -40,6 +41,7 @@ function StateStore:_load()
     if ok and type(decoded) == "table" and type(decoded.books) == "table" then
         self.data = decoded
         self.data.pending_states = self.data.pending_states or {}
+        self.data.pending_deletions = self.data.pending_deletions or {}
     end
 end
 
@@ -105,6 +107,35 @@ function StateStore:pending_states()
 end
 
 -- Full reset ("Reset sync" menu): next sync starts from scratch.
+-- Deletions nobody has answered yet. A scheduled sync must not put a dialog on
+-- screen, but the server reports a removal only once, so candidates are held
+-- here until an interactive sync can ask about them. Queued by uuid, so a book
+-- queued twice is still asked about once.
+function StateStore:queue_deletions(candidates)
+    local queued = {}
+    for _idx, entry in ipairs(self.data.pending_deletions) do
+        queued[entry.uuid] = true
+    end
+    for _idx, candidate in ipairs(candidates or {}) do
+        if candidate.uuid and not queued[candidate.uuid] then
+            queued[candidate.uuid] = true
+            table.insert(self.data.pending_deletions, {
+                uuid = candidate.uuid,
+                title = candidate.title,
+                local_path = candidate.local_path,
+            })
+        end
+    end
+end
+
+function StateStore:pending_deletions()
+    return self.data.pending_deletions
+end
+
+function StateStore:clear_pending_deletions()
+    self.data.pending_deletions = {}
+end
+
 function StateStore:reset()
     self.data = empty_data()
 end

@@ -9,6 +9,7 @@ Kobo's sync protocol is normally only spoken by Kobo's stock firmware. This plug
 - **Library sync** — new, changed and removed books are mirrored from the server
   - *Keep every book on this device*: every book the catalog lists is downloaded, and new ones follow as they arrive — on a first sync that is the whole library
   - *On demand* (for large libraries): sync only updates the catalog; browse the server library on-device — grouped by series, chapters in reading order, optionally as a cover grid — and download books as you open them
+- **Unattended syncs** — optionally refresh the catalog every 15, 30 or 60 minutes; runs only while Wi-Fi is already on, never starts downloads, and holds any deletions it finds until a sync you start yourself
 - **Two-way reading progress sync** — progress and finished/reading status, with newest-wins conflict resolution; queued offline and uploaded on the next sync
 - **Jump to server progress** — when a book is opened and the server knows a newer position, KOReader offers to jump there
 - **Safe deletions** — books removed on the server are only deleted locally after confirmation
