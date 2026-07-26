@@ -9,6 +9,10 @@
 local KoboApi = {}
 KoboApi.__index = KoboApi
 
+-- A page request that was abandoned on the user's say-so. Distinguished from a
+-- failure so it is never retried.
+KoboApi.CANCELLED = "cancelled"
+
 local SYNC_TOKEN_HEADER = "x-kobo-synctoken"
 local SYNC_CONTINUE_HEADER = "x-kobo-sync"
 local MAX_SYNC_PAGES = 1000
@@ -24,6 +28,10 @@ function KoboApi.new(opts)
     local self = setmetatable({}, KoboApi)
     self.base_url = opts.base_url:gsub("/+$", "")
     self.request = opts.request
+    -- Library pages take the server ten seconds apiece, long enough for a
+    -- caller to want them off the UI thread; everything else is short. A
+    -- separate hook lets the caller pay that cost only where it buys something.
+    self.sync_request = opts.sync_request or opts.request
     self.json = opts.json
     self.retry_delays = opts.retry_delays or DEFAULT_RETRY_DELAYS
     -- Injected so this module stays free of any socket implementation.
@@ -73,9 +81,12 @@ function KoboApi:_sync_page(req)
         if attempt > 1 then
             self.sleep(self.retry_delays[attempt - 1])
         end
-        resp, err = self.request(req)
+        resp, err = self.sync_request(req)
         if resp and resp.code == 200 then
             return resp
+        end
+        if err == KoboApi.CANCELLED then
+            return nil, err
         end
         if resp and resp.code < 500 then
             return nil, "HTTP " .. tostring(resp.code)

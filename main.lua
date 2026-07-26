@@ -128,10 +128,38 @@ function KoboSync:getState()
     return self.state
 end
 
+-- Library pages block for about ten seconds each while the server builds them.
+-- Run in process, that is long enough for Android to decide the app has hung
+-- and offer to close it, and no tap can be seen until the request returns.
+-- Trapper runs the request in a forked subprocess instead and polls for its
+-- result, so the screen stays live and the message stays dismissable
+-- throughout. This is the same mechanism KOReader's own Wikipedia, translator
+-- and OPDS browser use for their network calls.
+--
+-- Dismissing asks before giving up; choosing to carry on simply re-issues the
+-- request, which is safe because a sync page is a pure function of the token.
+function KoboSync:syncRequest(req)
+    while true do
+        local completed, resp, err = Trapper:dismissableRunInSubprocess(function()
+            return http_request(req)
+        end, self.sync_progress_text or _("Kobo Sync: synchronizing…"))
+        if completed then
+            return resp, err
+        end
+        if Trapper:confirm(
+                _("Stop syncing?\n\nWhat has been synced so far is kept, and syncing again resumes from here."),
+                _("Continue"), _("Stop")) then
+            self.sync_cancelled = true
+            return nil, KoboApi.CANCELLED
+        end
+    end
+end
+
 function KoboSync:getApi()
     return KoboApi.new{
         base_url = self.server_url,
         request = http_request,
+        sync_request = function(req) return self:syncRequest(req) end,
         json = rapidjson,
         sleep = socket.sleep,
     }
@@ -262,33 +290,39 @@ function KoboSync:onKoboSyncSync()
 end
 
 function KoboSync:doSync()
-    Trapper:info(_("Kobo Sync: synchronizing…"))
-
     local state = self:getState()
     local api = self:getApi()
     local first_sync = state:get_synctoken() == nil
     local result = SyncEngine.new_result()
-    local seen, cancelled = 0, false
+    local seen = 0
+    self.sync_cancelled = false
+    -- Shown by syncRequest while a page is in flight. The protocol sends no
+    -- total, so this counts up instead of filling a bar: the response
+    -- advertises a sync token and whether more pages follow, nothing more.
+    self.sync_progress_text = _("Kobo Sync: synchronizing…\n\nTap to stop.")
     local token, err, partial_token = api:sync(state:get_synctoken(), function(items, page)
         SyncEngine.process_items(state, items, result)
         seen = seen + #items
-        -- The protocol sends no total, so this counts up instead of filling a
-        -- bar. Trapper:info also yields, which lets the screen repaint between
-        -- pages -- without it a first sync of a large library looks like a hang.
-        if not Trapper:info(T(_("Kobo Sync: %1 items, page %2…\n\nTap to stop."), seen, page)) then
-            -- Ask rather than stop outright: on an e-ink screen a stray tap
-            -- should not throw away a walk that takes minutes.
-            if Trapper:confirm(
-                    _("Stop syncing?\n\nWhat has been synced so far is kept, and syncing again resumes from here."),
-                    _("Continue"), _("Stop")) then
-                cancelled = true
-                return false
-            end
+        self.sync_progress_text =
+            T(_("Kobo Sync: %1 items, page %2…\n\nTap to stop."), seen, page + 1)
+        if self.sync_cancelled then
+            return false
         end
     end)
+    local cancelled = self.sync_cancelled
     -- Keep progress from already processed pages even on a failed run.
     state:set_synctoken(token or partial_token or state:get_synctoken())
     state:save()
+    if cancelled then
+        -- The token covers the pages that were consumed, so the next run picks
+        -- up where this one stopped rather than starting over.
+        Trapper:clear()
+        UIManager:show(InfoMessage:new{
+            text = T(_("Kobo Sync stopped.\nNew: %1  Changed: %2\n\nThe next sync resumes from here."),
+                result.new, result.changed),
+        })
+        return
+    end
     if not token then
         Trapper:clear()
         -- A failed page keeps the token for the pages before it, so say so:
@@ -301,16 +335,6 @@ function KoboSync:doSync()
             message = T(_("Kobo Sync failed: %1"), err or _("unknown error"))
         end
         UIManager:show(InfoMessage:new{ text = message })
-        return
-    end
-    if cancelled then
-        -- The token covers the pages that were consumed, so the next run picks
-        -- up where this one stopped rather than starting over.
-        Trapper:clear()
-        UIManager:show(InfoMessage:new{
-            text = T(_("Kobo Sync stopped.\nNew: %1  Changed: %2\n\nThe next sync resumes from here."),
-                result.new, result.changed),
-        })
         return
     end
 
