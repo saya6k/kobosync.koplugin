@@ -1,4 +1,4 @@
-local _ = require("gettext")
+local _ = require("kobosync_gettext")
 return {
     name = "kobosync",
     fullname = _("Kobo Sync"),

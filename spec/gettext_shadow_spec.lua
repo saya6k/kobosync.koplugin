@@ -14,6 +14,7 @@ local SOURCES = {
     "browser.lua",
     "covermenu.lua",
     "koboapi.lua",
+    "kobosync_gettext.lua",
     "main.lua",
     "readingstate.lua",
     "statestore.lua",
@@ -40,7 +41,7 @@ describe("gettext binding", function()
     it("is never shadowed by a loop variable", function()
         for _idx, path in ipairs(SOURCES) do
             local source = read(path)
-            if source and source:find('local _ = require("gettext")', 1, true) then
+            if source and source:find('local _ = require("kobosync_gettext")', 1, true) then
                 local line_number = 0
                 for line in source:gmatch("[^\n]*") do
                     line_number = line_number + 1
