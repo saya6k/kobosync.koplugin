@@ -38,6 +38,14 @@ Or install it via [appstore.koplugin](https://github.com/omer-faruq/appstore.kop
 - The first sync of a large library can take a while; you will be asked before bulk downloads start.
 - *Reset sync* (in the menu) forgets the catalog and sync token but keeps downloaded files.
 
+## Localization
+
+The UI follows KOReader's language setting. Bundled: Arabic, Dutch, French, German, Italian, Japanese, Korean, Polish, Brazilian Portuguese, Russian, Simplified and Traditional Chinese, Spanish, Thai and Vietnamese; anything else falls back to English.
+
+**These are machine translations and have not been reviewed by native speakers** — corrections are welcome. Tables live in `l10n/<code>.lua` as plain Lua maps from the English source string, and `<code>` must match KOReader's own locale code (several carry a region, such as `it_IT`, `nl_NL`, `ko_KR`). `spec/l10n_spec.lua` checks that every table covers the template exactly and preserves each placeholder, since a key that drifts silently falls back to English.
+
+To add a language, copy `l10n/template.lua` to `l10n/<code>.lua` and translate the values.
+
 ## Development
 
 ```sh

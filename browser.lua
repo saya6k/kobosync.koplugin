@@ -10,7 +10,7 @@ local NetworkMgr = require("ui/network/manager")
 local UIManager = require("ui/uimanager")
 local lfs = require("libs/libkoreader-lfs")
 local util = require("util")
-local _ = require("gettext")
+local _ = require("kobosync_gettext")
 local T = require("ffi/util").template
 
 local SyncEngine = require("syncengine")

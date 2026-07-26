@@ -18,7 +18,7 @@ local ltn12 = require("ltn12")
 local rapidjson = require("rapidjson")
 local socket = require("socket")
 local socketutil = require("socketutil")
-local _ = require("gettext")
+local _ = require("kobosync_gettext")
 local ffiUtil = require("ffi/util")
 local T = ffiUtil.template
 
