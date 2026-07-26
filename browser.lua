@@ -83,8 +83,8 @@ end
 local function show_search_results(plugin, menu)
     local groups, standalone = SyncEngine.group_by_series(visible_books(plugin, menu))
     local items = {}
-    for _idx, group in ipairs(groups) do
-        for _idx, book in ipairs(group.books) do
+    for _gidx, group in ipairs(groups) do
+        for _bidx, book in ipairs(group.books) do
             table.insert(items, book_item(plugin, menu, book,
                 group.name .. " · " .. SyncEngine.short_title(book.title, group.name)))
         end
