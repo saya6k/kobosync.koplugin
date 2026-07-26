@@ -160,12 +160,23 @@ local function show_search_dialog(plugin, menu)
     dialog:onShowKeyboard()
 end
 
+-- The row widget differs per mode, so the browser is rebuilt rather than
+-- repainted.
+local function switch_cover_mode(plugin, menu, mode)
+    if plugin.cover_mode == mode then return end
+    plugin:setCoverMode(mode)
+    UIManager:close(menu)
+    Browser.show(plugin)
+end
+
 local function show_filter_menu(plugin, menu)
     local dialog
     local downloaded_label = menu.kobosync_downloaded_only
         and _("Show all books") or _("Show downloaded only")
-    local covers_label = plugin.show_covers
-        and _("Hide covers") or _("Show covers")
+    -- A tick marks the mode in force; tapping a row switches to it.
+    local function mode_label(mode, label)
+        return (plugin.cover_mode == mode and "✓ " or "") .. label
+    end
     dialog = ButtonDialog:new{
         buttons = {
             {{
@@ -184,14 +195,24 @@ local function show_filter_menu(plugin, menu)
                 end,
             }},
             {{
-                text = covers_label,
+                text = mode_label("off", _("Text list")),
                 callback = function()
                     UIManager:close(dialog)
-                    plugin:setShowCovers(not plugin.show_covers)
-                    -- The row widget differs between the two, so the whole
-                    -- browser is rebuilt rather than just repainted.
-                    UIManager:close(menu)
-                    Browser.show(plugin)
+                    switch_cover_mode(plugin, menu, "off")
+                end,
+            }},
+            {{
+                text = mode_label("list", _("Cover list")),
+                callback = function()
+                    UIManager:close(dialog)
+                    switch_cover_mode(plugin, menu, "list")
+                end,
+            }},
+            {{
+                text = mode_label("grid", _("Cover grid")),
+                callback = function()
+                    UIManager:close(dialog)
+                    switch_cover_mode(plugin, menu, "grid")
                 end,
             }},
         },
@@ -202,9 +223,11 @@ end
 function Browser.show(plugin)
     local menu
     -- Covers need a row widget KOReader's Menu cannot provide; see covermenu.lua.
-    local class = plugin.show_covers and CoverMenu or Menu
+    local with_covers = plugin.cover_mode == "list" or plugin.cover_mode == "grid"
+    local class = with_covers and CoverMenu or Menu
     local tried_covers = {}
     menu = class:new{
+        kobosync_grid = plugin.cover_mode == "grid",
         title = _("Kobo Sync library"),
         subtitle = "",
         item_table = {},
@@ -220,7 +243,7 @@ function Browser.show(plugin)
             show_top(plugin, menu)
         end,
     }
-    if plugin.show_covers then
+    if with_covers then
         menu.cover_file_func = function(item)
             return plugin:cachedCoverPath(item.kobosync_book)
         end
