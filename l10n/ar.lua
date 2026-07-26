@@ -97,6 +97,8 @@ return {
         "Kobo Sync: لدى الخادم تقدم قراءة أحدث (%1%). هل تنتقل إليه؟",
     ["Kobo Sync: “%1” is already on this device."] =
         "Kobo Sync: «%1» موجود بالفعل على هذا الجهاز.",
+    ["Last synced: %1"] =
+        "آخر مزامنة: %1",
     ["Matches book titles and series names."] =
         "يبحث في عناوين الكتب وأسماء السلاسل.",
     ["Missing locally: %1"] =
@@ -149,12 +151,12 @@ return {
         "يزامن المكتبة وتقدم القراءة مع خادم Kobo Sync مُستضاف ذاتيًا ",
     ["Text list"] =
         "قائمة نصية",
-    ["Timestamps refreshed: %1"] =
-        "تم تحديث الطوابع الزمنية: %1",
     ["Upload reading progress when closing a book"] =
         "رفع تقدم القراءة عند إغلاق كتاب",
     ["cannot write to the cover cache"] =
         "تعذّرت الكتابة في ذاكرة الأغلفة",
+    ["never"] =
+        "أبدًا",
     ["no cover URL for this server"] =
         "لا يوجد عنوان غلاف لهذا الخادم",
     ["the server took too long to respond"] =

@@ -97,6 +97,8 @@ return {
         "Kobo Sync：服务器上的阅读进度更新（%1%）。要跳转过去吗？",
     ["Kobo Sync: “%1” is already on this device."] =
         "Kobo Sync：《%1》已在本设备上。",
+    ["Last synced: %1"] =
+        "上次同步：%1",
     ["Matches book titles and series names."] =
         "搜索书名和系列名。",
     ["Missing locally: %1"] =
@@ -149,12 +151,12 @@ return {
         "与自建 Kobo Sync 服务器同步书库和阅读进度 ",
     ["Text list"] =
         "文字列表",
-    ["Timestamps refreshed: %1"] =
-        "已刷新时间戳：%1",
     ["Upload reading progress when closing a book"] =
         "关闭书籍时上传阅读进度",
     ["cannot write to the cover cache"] =
         "无法写入封面缓存",
+    ["never"] =
+        "从未",
     ["no cover URL for this server"] =
         "此服务器没有封面地址",
     ["the server took too long to respond"] =

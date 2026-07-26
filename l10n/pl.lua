@@ -97,6 +97,8 @@ return {
         "Kobo Sync: serwer ma nowszy postęp czytania (%1 %). Przejść tam?",
     ["Kobo Sync: “%1” is already on this device."] =
         "Kobo Sync: „%1” jest już na tym urządzeniu.",
+    ["Last synced: %1"] =
+        "Ostatnia synchronizacja: %1",
     ["Matches book titles and series names."] =
         "Szuka w tytułach książek i nazwach serii.",
     ["Missing locally: %1"] =
@@ -149,12 +151,12 @@ return {
         "Synchronizuje bibliotekę i postęp czytania z własnym serwerem Kobo Sync ",
     ["Text list"] =
         "Lista tekstowa",
-    ["Timestamps refreshed: %1"] =
-        "Odświeżone znaczniki czasu: %1",
     ["Upload reading progress when closing a book"] =
         "Wysyłaj postęp czytania przy zamykaniu książki",
     ["cannot write to the cover cache"] =
         "nie można zapisać do pamięci podręcznej okładek",
+    ["never"] =
+        "nigdy",
     ["no cover URL for this server"] =
         "brak adresu URL okładki dla tego serwera",
     ["the server took too long to respond"] =

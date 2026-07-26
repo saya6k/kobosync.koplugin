@@ -97,6 +97,8 @@ return {
         "Kobo Sync: เซิร์ฟเวอร์มีความคืบหน้าการอ่านที่ใหม่กว่า (%1 %) ต้องการข้ามไปที่นั่นหรือไม่?",
     ["Kobo Sync: “%1” is already on this device."] =
         "Kobo Sync: “%1” อยู่ในเครื่องนี้แล้ว",
+    ["Last synced: %1"] =
+        "ซิงค์ล่าสุด: %1",
     ["Matches book titles and series names."] =
         "ค้นหาจากชื่อหนังสือและชื่อชุดหนังสือ",
     ["Missing locally: %1"] =
@@ -149,12 +151,12 @@ return {
         "ซิงค์คลังหนังสือและความคืบหน้าการอ่านกับเซิร์ฟเวอร์ Kobo Sync ที่คุณโฮสต์เอง ",
     ["Text list"] =
         "รายการแบบข้อความ",
-    ["Timestamps refreshed: %1"] =
-        "รีเฟรชเวลาแล้ว: %1",
     ["Upload reading progress when closing a book"] =
         "อัปโหลดความคืบหน้าการอ่านเมื่อปิดหนังสือ",
     ["cannot write to the cover cache"] =
         "เขียนลงแคชปกหนังสือไม่ได้",
+    ["never"] =
+        "ยังไม่เคย",
     ["no cover URL for this server"] =
         "ไม่มี URL ปกสำหรับเซิร์ฟเวอร์นี้",
     ["the server took too long to respond"] =
