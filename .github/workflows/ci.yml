@@ -54,9 +54,14 @@ jobs:
           grep -q "version = \"$VERSION\"" _meta.lua
       - name: Package
         run: ./scripts/package.sh
+      # make_latest is explicit because the action leaves it to whatever the
+      # publish form was set to, and appstore.koplugin reads /releases/latest
+      # to decide there is an update -- a stable release that misses the flag
+      # ships to nobody. rc releases must never claim it.
       - uses: softprops/action-gh-release@v2
         with:
           files: dist/kobosync.koplugin.zip
+          make_latest: ${{ !github.event.release.prerelease }}
       # Keep the default branch in sync so the "Direct download from repo"
       # install path (branch zipball) reports the same version as the release.
       # Stable releases only: main must not advertise an -rc version, and the
