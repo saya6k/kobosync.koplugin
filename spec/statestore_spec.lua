@@ -28,7 +28,7 @@ describe("StateStore", function()
         local store = new_store()
         store:set_synctoken("z1:opaque==")
         store:upsert_book("uuid-1", {
-            title = "괴담에 떨어져도 출근을 해야 하는구나 — 25화?!",
+            title = "어떤 제목 — 25화?!",
             author = "작자/미상 <테스트>",
             revision_id = "rev-1",
             downloaded = false,
@@ -39,7 +39,7 @@ describe("StateStore", function()
         local reloaded = new_store()
         assert.are.equal("z1:opaque==", reloaded:get_synctoken())
         local book = reloaded:get_book("uuid-1")
-        assert.are.equal("괴담에 떨어져도 출근을 해야 하는구나 — 25화?!", book.title)
+        assert.are.equal("어떤 제목 — 25화?!", book.title)
         assert.are.equal("작자/미상 <테스트>", book.author)
         assert.is_false(book.downloaded)
         assert.are.equal(42.5, reloaded:pending_states()["uuid-1"].ProgressPercent)

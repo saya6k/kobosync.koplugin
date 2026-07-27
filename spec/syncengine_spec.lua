@@ -37,16 +37,16 @@ describe("SyncEngine.process_items", function()
         local result = SyncEngine.new_result()
         SyncEngine.process_items(store, {
             { NewEntitlement = entitlement("u1", {
-                title = "괴담 25화", contributors = { "백덕수" },
-                series = { Name = "괴담", Number = 25.0, NumberFloat = 25.0 },
+                title = "시리즈 25화", contributors = { "지은이" },
+                series = { Name = "시리즈", Number = 25.0, NumberFloat = 25.0 },
             }) },
             { NewEntitlement = entitlement("u2") },
         }, result)
         assert.are.equal(2, result.new)
         local book = store:get_book("u1")
-        assert.are.equal("괴담 25화", book.title)
-        assert.are.equal("백덕수", book.author)
-        assert.are.equal("괴담", book.series_name)
+        assert.are.equal("시리즈 25화", book.title)
+        assert.are.equal("지은이", book.author)
+        assert.are.equal("시리즈", book.series_name)
         assert.are.equal(25.0, book.series_number)
         assert.is_truthy(book.download_urls)
     end)
@@ -143,8 +143,8 @@ end)
 
 describe("SyncEngine filenames", function()
     it("builds sanitized names and keeps unicode", function()
-        assert.are.equal("괴담_ 출근 - 백덕수",
-            SyncEngine.sanitize_filename('괴담: 출근', "백덕수"))
+        assert.are.equal("제목_ 부제 - 지은이",
+            SyncEngine.sanitize_filename('제목: 부제', "지은이"))
         assert.are.equal("a_b_c_d", SyncEngine.sanitize_filename("a/b\\c*d", nil))
         assert.are.equal("Untitled", SyncEngine.sanitize_filename(nil, nil))
         assert.are.equal("_hidden", SyncEngine.sanitize_filename(".hidden", nil))
