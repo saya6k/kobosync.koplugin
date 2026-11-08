@@ -101,6 +101,8 @@ return {
         "Last synced: %1",
     ["Matches book titles and series names."] =
         "Matches book titles and series names.",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone.",
     ["Missing locally: %1"] =
         "Missing locally: %1",
     ["Not now"] =
@@ -133,6 +135,8 @@ return {
         "Server: %1",
     ["Set server URL"] =
         "Set server URL",
+    ["Shelves as collections: %1"] =
+        "Shelves as collections: %1",
     ["Show all books"] =
         "Show all books",
     ["Show downloaded only"] =

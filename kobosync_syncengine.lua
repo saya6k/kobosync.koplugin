@@ -163,6 +163,22 @@ local function process_entitlement(store, e, is_new, result)
     end
 end
 
+-- Stores a shelf with its members. calibre-web names each member by the book
+-- uuid in RevisionId, which is also its entitlement id; other servers may use a
+-- real revision id, so the ids are kept as sent and resolved against the
+-- catalog only when collections are built.
+local function process_tag(store, tag)
+    if type(tag) ~= "table" or not tag.Id then return end
+    if not tag.Name or tag.Name == "" then return end
+    local books = {}
+    for _idx, item in ipairs(type(tag.Items) == "table" and tag.Items or {}) do
+        if item.RevisionId then
+            table.insert(books, item.RevisionId)
+        end
+    end
+    store:set_tag(tag.Id, { name = tag.Name, books = books })
+end
+
 -- Processes one page of sync items into the store, accumulating into result
 -- (from new_result()). Unknown item types and fields are ignored.
 function SyncEngine.process_items(store, items, result)
@@ -177,8 +193,15 @@ function SyncEngine.process_items(store, items, result)
                 store:upsert_book(state.EntitlementId, { server_state = state })
                 result.states = result.states + 1
             end
+        elseif item.NewTag or item.ChangedTag then
+            process_tag(store, (item.NewTag or item.ChangedTag).Tag)
+        elseif item.DeletedTag then
+            local tag = item.DeletedTag.Tag
+            if tag and tag.Id then
+                store:remove_tag(tag.Id)
+            end
         end
-        -- NewTag/ChangedTag/DeletedTag and anything else: ignored in v1.
+        -- Anything else: ignored.
     end
     return result
 end

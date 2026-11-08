@@ -101,6 +101,8 @@ return {
         "آخر مزامنة: %1",
     ["Matches book titles and series names."] =
         "يبحث في عناوين الكتب وأسماء السلاسل.",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "ينسخ الرفوف التي يزامنها خادمك إلى مجموعات KOReader، تضم كل منها كتب رفّها الموجودة على هذا الجهاز. الكتب التي تضيفها بنفسك إلى هذه المجموعات تبقى كما هي.",
     ["Missing locally: %1"] =
         "مفقود محليًا: %1",
     ["Not now"] =
@@ -133,6 +135,8 @@ return {
         "الخادم: %1",
     ["Set server URL"] =
         "تعيين عنوان الخادم",
+    ["Shelves as collections: %1"] =
+        "الرفوف كمجموعات: %1",
     ["Show all books"] =
         "إظهار كل الكتب",
     ["Show downloaded only"] =

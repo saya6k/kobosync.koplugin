@@ -101,6 +101,8 @@ return {
         "마지막 동기화: %1",
     ["Matches book titles and series names."] =
         "책 제목과 시리즈 이름에서 찾습니다.",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "서버가 동기화하는 책장을 KOReader 컬렉션으로 옮겨 오며, 각 컬렉션에는 해당 책장의 책 중 이 기기에 있는 책이 들어갑니다. 직접 컬렉션에 추가한 책은 그대로 둡니다.",
     ["Missing locally: %1"] =
         "기기에 없음: %1",
     ["Not now"] =
@@ -133,6 +135,8 @@ return {
         "서버: %1",
     ["Set server URL"] =
         "서버 주소 설정",
+    ["Shelves as collections: %1"] =
+        "책장을 컬렉션으로: %1",
     ["Show all books"] =
         "모든 책 보기",
     ["Show downloaded only"] =

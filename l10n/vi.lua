@@ -101,6 +101,8 @@ return {
         "Đồng bộ lần cuối: %1",
     ["Matches book titles and series names."] =
         "Tìm trong tên sách và tên bộ sách.",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "Phản chiếu các kệ sách mà máy chủ đồng bộ thành bộ sưu tập KOReader, mỗi bộ chứa những cuốn sách của kệ đó đang có trên thiết bị này. Sách bạn tự thêm vào các bộ sưu tập đó sẽ được giữ nguyên.",
     ["Missing locally: %1"] =
         "Thiếu ở máy: %1",
     ["Not now"] =
@@ -133,6 +135,8 @@ return {
         "Máy chủ: %1",
     ["Set server URL"] =
         "Đặt URL máy chủ",
+    ["Shelves as collections: %1"] =
+        "Kệ sách thành bộ sưu tập: %1",
     ["Show all books"] =
         "Hiện mọi cuốn sách",
     ["Show downloaded only"] =

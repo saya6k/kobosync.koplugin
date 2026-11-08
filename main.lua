@@ -24,6 +24,7 @@ local T = ffiUtil.template
 
 local Event = require("ui/event")
 
+local Collections = require("kobosync_collections")
 local KoboApi = require("kobosync_koboapi")
 local ReadingState = require("kobosync_readingstate")
 local StateStore = require("kobosync_statestore")
@@ -99,6 +100,7 @@ function KoboSync:init()
         or DataStorage:getDataDir() .. "/kobosync"
     self.download_mode = self.settings:readSetting("download_mode") or "auto"
     self.upload_on_close = self.settings:nilOrTrue("upload_on_close")
+    self.sync_collections = self.settings:nilOrTrue("sync_collections")
     -- Minutes between unattended syncs; 0 is off.
     self.sync_interval = tonumber(self.settings:readSetting("sync_interval")) or 0
     self.sync_on_start = self.settings:isTrue("sync_on_start")
@@ -212,6 +214,7 @@ function KoboSync:saveSettings()
     self.settings:saveSetting("download_dir", self.download_dir)
     self.settings:saveSetting("download_mode", self.download_mode)
     self.settings:saveSetting("upload_on_close", self.upload_on_close)
+    self.settings:saveSetting("sync_collections", self.sync_collections)
     self.settings:saveSetting("sync_interval", self.sync_interval)
     self.settings:saveSetting("sync_on_start", self.sync_on_start)
     self.settings:saveSetting("last_sync", self.last_sync)
@@ -463,6 +466,21 @@ function KoboSync:addToMainMenu(menu_items)
             },
             {
                 text_func = function()
+                    return T(_("Shelves as collections: %1"), self:onOffText(self.sync_collections))
+                end,
+                help_text = _("Mirrors the shelves your server syncs into KOReader collections, "
+                    .. "each holding the books from its shelf that are on this device. "
+                    .. "Books you add to those collections yourself are left alone."),
+                keep_menu_open = true,
+                callback = function(touchmenu_instance)
+                    self.sync_collections = not self.sync_collections
+                    self:saveSettings()
+                    self:syncCollections(self:getState())
+                    self:refreshMenu(touchmenu_instance)
+                end,
+            },
+            {
+                text_func = function()
                     return T(_("Upload reading progress when closing a book: %1"),
                         self:onOffText(self.upload_on_close))
                 end,
@@ -629,6 +647,7 @@ function KoboSync:doSync(opts)
     if opts.scheduled then
         state:queue_deletions(result.delete_candidates)
         state:save()
+        self:syncCollections(state)
         self:reportSync(result, 0, 0, pushed, pulled, missing, true)
         return
     end
@@ -648,6 +667,8 @@ function KoboSync:doSync(opts)
         self:confirmDeletions(state, candidates, function()
             state:clear_pending_deletions()
             state:save()
+            -- Last, so books downloaded or deleted just now are accounted for.
+            self:syncCollections(state)
             self:reportSync(result, downloaded, failed, pushed, pulled, missing, false)
         end)
     end)
@@ -850,6 +871,32 @@ function KoboSync:downloadBook(state, api, item)
         state:upsert_book(item.uuid, { applied_state_time = book.server_state.LastModified })
     end
     return true
+end
+
+-- Brings KOReader's collections in line with the server shelves. Called after
+-- anything that changes which books are on the device, not per download: each
+-- run rewrites the collection file.
+function KoboSync:syncCollections(state)
+    if not self.sync_collections then return end
+    local ok, ReadCollection = pcall(require, "readcollection")
+    -- Older KOReader has only favorites, with no named collections to mirror
+    -- shelves into.
+    if not ok or type(ReadCollection) ~= "table"
+            or type(ReadCollection.addCollection) ~= "function" then
+        return
+    end
+    local done, err = pcall(function()
+        -- Picks up edits made since KOReader last read the file; a no-op
+        -- otherwise.
+        ReadCollection:_read()
+        local desired = Collections.desired(state, ffiUtil.realpath)
+        state:set_applied_collections(
+            Collections.apply(ReadCollection, desired, state:applied_collections()))
+        state:save()
+    end)
+    if not done then
+        logger.warn("KoboSync: could not update collections:", err)
+    end
 end
 
 -- Reads the KOReader sidecar for a closed book; nil when never opened.

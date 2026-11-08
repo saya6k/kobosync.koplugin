@@ -101,6 +101,8 @@ return {
         "Laatst gesynchroniseerd: %1",
     ["Matches book titles and series names."] =
         "Zoekt in boektitels en reeksnamen.",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "Neemt de boekenplanken die je server synchroniseert over als KOReader-collecties, elk met de boeken van die plank die op dit apparaat staan. Boeken die je zelf aan die collecties toevoegt, blijven ongemoeid.",
     ["Missing locally: %1"] =
         "Lokaal ontbrekend: %1",
     ["Not now"] =
@@ -133,6 +135,8 @@ return {
         "Server: %1",
     ["Set server URL"] =
         "Server-URL instellen",
+    ["Shelves as collections: %1"] =
+        "Boekenplanken als collecties: %1",
     ["Show all books"] =
         "Alle boeken tonen",
     ["Show downloaded only"] =

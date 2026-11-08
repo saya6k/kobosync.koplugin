@@ -101,6 +101,8 @@ return {
         "ซิงค์ล่าสุด: %1",
     ["Matches book titles and series names."] =
         "ค้นหาจากชื่อหนังสือและชื่อชุดหนังสือ",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "สะท้อนชั้นหนังสือที่เซิร์ฟเวอร์ซิงค์ไปเป็นคอลเลกชันของ KOReader โดยแต่ละคอลเลกชันมีหนังสือจากชั้นนั้นที่อยู่ในอุปกรณ์นี้ หนังสือที่คุณเพิ่มเข้าคอลเลกชันเองจะไม่ถูกแตะต้อง",
     ["Missing locally: %1"] =
         "ไม่พบในเครื่อง: %1",
     ["Not now"] =
@@ -133,6 +135,8 @@ return {
         "เซิร์ฟเวอร์: %1",
     ["Set server URL"] =
         "ตั้งค่า URL เซิร์ฟเวอร์",
+    ["Shelves as collections: %1"] =
+        "ชั้นหนังสือเป็นคอลเลกชัน: %1",
     ["Show all books"] =
         "แสดงหนังสือทั้งหมด",
     ["Show downloaded only"] =

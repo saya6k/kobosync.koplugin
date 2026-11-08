@@ -350,6 +350,7 @@ function Browser.downloadBooks(plugin, menu, books, label, refresh)
                     local downloaded, failed =
                         plugin:downloadPlanned(state, plugin:getApi(), plan)
                     state:save()
+                    plugin:syncCollections(state)
                     local text = T(_("Kobo Sync: %1 downloaded."), downloaded)
                     if failed > 0 then
                         text = text .. "\n" .. T(_("Failed: %1"), failed)
@@ -395,6 +396,9 @@ function Browser.openBook(plugin, menu, book)
             revision_id = current.revision_id,
         })
         state:save()
+        if ok then
+            plugin:syncCollections(state)
+        end
         UIManager:close(info)
         if not ok then
             UIManager:show(InfoMessage:new{

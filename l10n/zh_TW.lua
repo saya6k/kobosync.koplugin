@@ -101,6 +101,8 @@ return {
         "上次同步：%1",
     ["Matches book titles and series names."] =
         "搜尋書名與系列名稱。",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "將伺服器同步的書架對應為 KOReader 收藏集，每個收藏集包含該書架中已在本裝置上的書籍。您自行加入這些收藏集的書籍不會被更動。",
     ["Missing locally: %1"] =
         "本機缺少：%1",
     ["Not now"] =
@@ -133,6 +135,8 @@ return {
         "伺服器：%1",
     ["Set server URL"] =
         "設定伺服器網址",
+    ["Shelves as collections: %1"] =
+        "書架作為收藏集：%1",
     ["Show all books"] =
         "顯示所有書籍",
     ["Show downloaded only"] =

@@ -106,13 +106,71 @@ describe("SyncEngine.process_items", function()
         assert.are.equal(3.72, store:get_book("u1").server_state.CurrentBookmark.ProgressPercent)
     end)
 
-    it("ignores tags and unknown item types", function()
+    it("ignores unknown item types", function()
         local store = new_store()
         local result = SyncEngine.new_result()
         SyncEngine.process_items(store, {
-            { DeletedTag = { Tag = { Id = "t1" } } },
-            { NewTag = { Tag = { Id = "t2" } } },
             { SomethingFromTheFuture = { Whatever = true } },
+        }, result)
+        assert.are.equal(0, result.new + result.changed + result.states + result.removed)
+    end)
+end)
+
+-- Shaped like calibre-web's create_kobo_tag: members named by book uuid.
+local function tag(id, name, members)
+    local items = {}
+    for _idx, uuid in ipairs(members or {}) do
+        table.insert(items, { RevisionId = uuid, Type = "ProductRevisionTagItem" })
+    end
+    return { Tag = {
+        Id = id, Name = name, Items = items, Type = "UserTag",
+        Created = "2026-07-25T00:00:00Z", LastModified = "2026-07-25T00:00:00Z",
+    } }
+end
+
+describe("SyncEngine.process_items with tags", function()
+    it("stores a new shelf with its members", function()
+        local store = new_store()
+        SyncEngine.process_items(store, {
+            { NewTag = tag("t1", "To read", { "u1", "u2" }) },
+        }, SyncEngine.new_result())
+        assert.are.same({ name = "To read", books = { "u1", "u2" } }, store:tags()["t1"])
+    end)
+
+    it("replaces the members on a change rather than merging them", function()
+        local store = new_store()
+        SyncEngine.process_items(store, {
+            { NewTag = tag("t1", "To read", { "u1", "u2" }) },
+            { ChangedTag = tag("t1", "Reading", { "u2" }) },
+        }, SyncEngine.new_result())
+        assert.are.same({ name = "Reading", books = { "u2" } }, store:tags()["t1"])
+    end)
+
+    it("drops a deleted shelf", function()
+        local store = new_store()
+        SyncEngine.process_items(store, {
+            { NewTag = tag("t1", "To read", { "u1" }) },
+            { DeletedTag = { Tag = { Id = "t1", LastModified = "2026-07-26T00:00:00Z" } } },
+        }, SyncEngine.new_result())
+        assert.is_nil(store:tags()["t1"])
+    end)
+
+    it("keeps an empty shelf and skips one without a name or id", function()
+        local store = new_store()
+        SyncEngine.process_items(store, {
+            { NewTag = tag("t1", "Empty") },
+            { NewTag = tag("t2", "") },
+            { NewTag = { Tag = { Name = "No id" } } },
+            { NewTag = {} },
+        }, SyncEngine.new_result())
+        assert.are.same({ t1 = { name = "Empty", books = {} } }, store:tags())
+    end)
+
+    it("does not count shelves as book changes", function()
+        local store = new_store()
+        local result = SyncEngine.new_result()
+        SyncEngine.process_items(store, {
+            { NewTag = tag("t1", "To read", { "u1" }) },
         }, result)
         assert.are.equal(0, result.new + result.changed + result.states + result.removed)
     end)

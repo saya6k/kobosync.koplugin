@@ -1,5 +1,5 @@
--- Persistent plugin state: opaque sync token, book catalog, and the queue of
--- reading states waiting to be uploaded. Pure logic: stores JSON at an
+-- Persistent plugin state: opaque sync token, book catalog, server shelves, and
+-- the queue of reading states waiting to be uploaded. Pure logic: stores JSON at an
 -- injected path, JSON implementation injected (rapidjson in KOReader).
 --
 -- Catalog entry (per book uuid): free-form table owned by the caller, e.g.
@@ -16,6 +16,12 @@ local function empty_data()
         books = {},
         pending_states = {},
         pending_deletions = {},
+        -- Server shelves (Kobo "tags") by id: { name, books = { uuid, ... } }.
+        tags = {},
+        -- What the plugin last wrote into KOReader's collections, by tag id:
+        -- { name, created, files = { path, ... } }. Device state rather than
+        -- sync state, so a reset keeps it (see reset()).
+        collections = {},
     }
 end
 
@@ -42,6 +48,8 @@ function StateStore:_load()
         self.data = decoded
         self.data.pending_states = self.data.pending_states or {}
         self.data.pending_deletions = self.data.pending_deletions or {}
+        self.data.tags = self.data.tags or {}
+        self.data.collections = self.data.collections or {}
     end
 end
 
@@ -94,6 +102,28 @@ function StateStore:list_books()
     return books
 end
 
+-- A shelf arrives whole: the server sends every member on each change, so the
+-- entry is replaced rather than merged.
+function StateStore:set_tag(id, tag)
+    self.data.tags[id] = tag
+end
+
+function StateStore:remove_tag(id)
+    self.data.tags[id] = nil
+end
+
+function StateStore:tags()
+    return self.data.tags
+end
+
+function StateStore:applied_collections()
+    return self.data.collections
+end
+
+function StateStore:set_applied_collections(applied)
+    self.data.collections = applied
+end
+
 function StateStore:set_pending_state(uuid, state)
     self.data.pending_states[uuid] = state
 end
@@ -136,8 +166,13 @@ function StateStore:clear_pending_deletions()
     self.data.pending_deletions = {}
 end
 
+-- The record of applied collections survives: it describes KOReader's own
+-- collection file, which a reset does not touch, and without it the next sync
+-- could no longer tell the books it put there from the ones the user did.
 function StateStore:reset()
+    local collections = self.data.collections
     self.data = empty_data()
+    self.data.collections = collections
 end
 
 return StateStore

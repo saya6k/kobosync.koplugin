@@ -101,6 +101,8 @@ return {
         "最終同期: %1",
     ["Matches book titles and series names."] =
         "本のタイトルとシリーズ名を検索します。",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "サーバーが同期する本棚を KOReader のコレクションに反映します。各コレクションには、その本棚の本のうちこの端末にあるものが入ります。自分でコレクションに追加した本はそのまま残ります。",
     ["Missing locally: %1"] =
         "ローカルに存在しません: %1",
     ["Not now"] =
@@ -133,6 +135,8 @@ return {
         "サーバー: %1",
     ["Set server URL"] =
         "サーバー URL を設定",
+    ["Shelves as collections: %1"] =
+        "本棚をコレクションに: %1",
     ["Show all books"] =
         "すべての本を表示",
     ["Show downloaded only"] =

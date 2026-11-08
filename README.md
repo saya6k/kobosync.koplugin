@@ -12,6 +12,7 @@ Kobo's sync protocol is normally only spoken by Kobo's stock firmware. This plug
 - **Unattended syncs** — optionally refresh the catalog every 15, 30 or 60 minutes; runs only while Wi-Fi is already on, never starts downloads, and holds any deletions it finds until a sync you start yourself
 - **Two-way reading progress sync** — progress and finished/reading status, with newest-wins conflict resolution; queued offline and uploaded on the next sync
 - **Jump to server progress** — when a book is opened and the server knows a newer position, KOReader offers to jump there
+- **Shelves as collections** — shelves your server syncs (calibre-web: shelves with *Sync this shelf with Kobo device*, or all of them) become KOReader collections holding the shelf's books that are on the device; renames, removals and deleted shelves follow, and books you add to those collections yourself are left alone
 - **Safe deletions** — books removed on the server are only deleted locally after confirmation
 - Bulk-download confirmation on first sync, incremental syncs afterwards, epub preferred over kepub, gesture-assignable sync action
 
@@ -34,7 +35,9 @@ Or install it via [appstore.koplugin](https://github.com/omer-faruq/appstore.kop
 ## Notes & limitations
 
 - Reading positions are exchanged as **percentages** (the Kobo protocol's kepub spans cannot be mapped to KOReader positions). The kepub location from other Kobo devices is preserved untouched.
-- Tags/shelves, annotations and highlights are not synced (v1).
+- Shelves sync one way, server to device: collection changes made in KOReader are not sent back. Annotations and highlights are not synced.
+- A shelf only becomes a collection once at least one of its books is downloaded.
+- Upgrading from 0.5 or earlier: the server already counts its shelves as delivered, so a shelf shows up once it changes on the server (e.g. a book is added), or right away after *Reset sync*.
 - The first sync of a large library can take a while; you will be asked before bulk downloads start.
 - *Reset sync* (in the menu) forgets the catalog and sync token but keeps downloaded files.
 
