@@ -931,10 +931,12 @@ function KoboSync:syncCollections(state)
             or type(ReadCollection.addCollection) ~= "function" then
         return
     end
+    -- ReadCollection is used as it stands in memory, never reloaded with
+    -- _read(): that rebuilds every collection from disk and drops changes
+    -- KOReader's own collections screen, or a plugin such as SimpleUI, has
+    -- made but not written yet. KOReader reads the file once, at startup, and
+    -- every edit since goes through this same table.
     local done, err = pcall(function()
-        -- Picks up edits made since KOReader last read the file; a no-op
-        -- otherwise.
-        ReadCollection:_read()
         local desired = Collections.desired(state, ffiUtil.realpath)
         state:set_applied_collections(
             Collections.apply(ReadCollection, desired, state:applied_collections()))
