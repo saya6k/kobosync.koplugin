@@ -23,12 +23,16 @@ return {
         "ดาวน์โหลด",
     ["Download all %1 books"] =
         "ดาวน์โหลดทั้งหมด %1 เล่ม",
+    ["Download books on synced shelves: %1"] =
+        "ดาวน์โหลดหนังสือในชั้นที่ซิงค์: %1",
     ["Download folder: %1"] =
         "โฟลเดอร์ดาวน์โหลด: %1",
     ["Downloaded: %1"] =
         "ดาวน์โหลดแล้ว: %1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "ดาวน์โหลดหนังสือทุกเล่มในคลังและดึงเล่มใหม่เมื่อมีเพิ่ม การซิงค์ครั้งแรกจึงหมายถึงทั้งคลัง เมื่อปิดไว้ การซิงค์จะอัปเดตเฉพาะรายการหนังสือ และดาวน์โหลดทีละเล่มจากหน้าเรียกดูคลังบนเซิร์ฟเวอร์",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "ดาวน์โหลดหนังสือในชั้นหนังสือที่เซิร์ฟเวอร์ซิงค์ แม้ว่าส่วนที่เหลือของคลังจะดาวน์โหลดตามต้องการ",
     ["Every %1 minutes"] =
         "ทุก %1 นาที",
     ["Failed downloads: %1"] =

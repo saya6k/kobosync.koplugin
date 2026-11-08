@@ -23,12 +23,16 @@ return {
         "Télécharger",
     ["Download all %1 books"] =
         "Télécharger les %1 livres",
+    ["Download books on synced shelves: %1"] =
+        "Télécharger les livres des étagères synchronisées : %1",
     ["Download folder: %1"] =
         "Dossier de téléchargement : %1",
     ["Downloaded: %1"] =
         "Téléchargés : %1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "Télécharge chaque livre de la bibliothèque et récupère les nouveautés à mesure qu'elles arrivent ; lors d'une première synchronisation, cela représente toute la bibliothèque. Si désactivé, la synchronisation ne met à jour que le catalogue et les livres se téléchargent un par un depuis l'explorateur de bibliothèque du serveur.",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "Télécharge les livres des étagères synchronisées par votre serveur, même lorsque le reste de la bibliothèque est téléchargé à la demande.",
     ["Every %1 minutes"] =
         "Toutes les %1 minutes",
     ["Failed downloads: %1"] =

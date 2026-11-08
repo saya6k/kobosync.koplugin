@@ -23,12 +23,16 @@ return {
         "Загрузить",
     ["Download all %1 books"] =
         "Загрузить все %1 книг",
+    ["Download books on synced shelves: %1"] =
+        "Загружать книги с синхронизируемых полок: %1",
     ["Download folder: %1"] =
         "Папка загрузки: %1",
     ["Downloaded: %1"] =
         "Загружено: %1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "Загружает каждую книгу библиотеки и добавляет новые по мере появления; при первой синхронизации это вся библиотека. Если выключено, синхронизация обновляет только каталог, а книги загружаются по одной из обзора библиотеки сервера.",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "Загружает книги с полок, синхронизируемых сервером, даже если остальная библиотека загружается по запросу.",
     ["Every %1 minutes"] =
         "Каждые %1 минут",
     ["Failed downloads: %1"] =

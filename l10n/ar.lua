@@ -23,12 +23,16 @@ return {
         "تنزيل",
     ["Download all %1 books"] =
         "تنزيل كل الكتب (%1)",
+    ["Download books on synced shelves: %1"] =
+        "تنزيل كتب الرفوف المتزامنة: %1",
     ["Download folder: %1"] =
         "مجلد التنزيل: %1",
     ["Downloaded: %1"] =
         "تم التنزيل: %1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "ينزّل كل كتاب في المكتبة ويجلب الجديد فور وصوله؛ في المزامنة الأولى يعني ذلك المكتبة بأكملها. عند التعطيل تُحدِّث المزامنة الفهرس فقط، وتُنزَّل الكتب واحدًا تلو الآخر من متصفح مكتبة الخادم.",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "ينزّل الكتب الموجودة على الرفوف التي يزامنها خادمك، حتى عندما يُنزَّل باقي المكتبة عند الطلب.",
     ["Every %1 minutes"] =
         "كل %1 دقيقة",
     ["Failed downloads: %1"] =

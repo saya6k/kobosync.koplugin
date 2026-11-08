@@ -453,7 +453,8 @@ end
 
 -- Computes which catalog books need downloading.
 -- mode "auto": every book we do not have yet, plus stale re-downloads.
--- mode "on_demand": stale re-downloads only (of books the user already has).
+-- mode "on_demand": stale re-downloads only (of books the user already has),
+-- plus books on synced shelves when opts.shelves is set.
 -- A downloaded book is stale when the server revision or file size changed.
 -- Clears the downloaded flag on catalog entries whose file is gone, i.e. books
 -- deleted on the device outside the plugin. Left alone they keep their tick in
@@ -493,7 +494,32 @@ local function plan_entry(book, pick)
     }
 end
 
-function SyncEngine.plan_downloads(store, mode)
+-- Catalog uuids of every book on a synced shelf. Members are named as the
+-- server sent them, by uuid or by revision id, so both are resolved.
+function SyncEngine.shelf_members(store)
+    local by_revision = {}
+    for _idx, book in ipairs(store:list_books()) do
+        if book.revision_id then
+            by_revision[book.revision_id] = book.uuid
+        end
+    end
+    local members = {}
+    for _id, tag in pairs(store:tags()) do
+        for _idx, member in ipairs(tag.books or {}) do
+            local uuid = store:get_book(member) and member or by_revision[member]
+            if uuid then
+                members[uuid] = true
+            end
+        end
+    end
+    return members
+end
+
+-- opts.shelves: also fetch books on synced shelves in on_demand mode. Putting
+-- a book on a shelf that syncs to the device is asking for it there.
+function SyncEngine.plan_downloads(store, mode, opts)
+    opts = opts or {}
+    local on_shelf = opts.shelves and SyncEngine.shelf_members(store) or {}
     local plan = {}
     for _idx, book in ipairs(store:list_books()) do
         local pick = SyncEngine.pick_download(book.download_urls)
@@ -502,7 +528,7 @@ function SyncEngine.plan_downloads(store, mode)
             if book.downloaded then
                 want = is_stale(book, pick)
             else
-                want = mode == "auto"
+                want = mode == "auto" or on_shelf[book.uuid] == true
             end
             if want then
                 table.insert(plan, plan_entry(book, pick))

@@ -23,12 +23,16 @@ return {
         "下载",
     ["Download all %1 books"] =
         "下载全部 %1 本",
+    ["Download books on synced shelves: %1"] =
+        "下载已同步书架上的书籍：%1",
     ["Download folder: %1"] =
         "下载文件夹：%1",
     ["Downloaded: %1"] =
         "已下载：%1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "下载书库中的每一本书，并在有新书时继续获取；首次同步时这意味着整个书库。关闭后，同步只更新目录，书籍需在服务器书库浏览器中逐本下载。",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "下载服务器同步的书架上的书籍，即使书库的其余部分按需下载。",
     ["Every %1 minutes"] =
         "每 %1 分钟",
     ["Failed downloads: %1"] =

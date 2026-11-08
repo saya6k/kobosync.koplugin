@@ -101,6 +101,7 @@ function KoboSync:init()
     self.download_mode = self.settings:readSetting("download_mode") or "auto"
     self.upload_on_close = self.settings:nilOrTrue("upload_on_close")
     self.sync_collections = self.settings:nilOrTrue("sync_collections")
+    self.download_shelves = self.settings:nilOrTrue("download_shelves")
     -- Minutes between unattended syncs; 0 is off.
     self.sync_interval = tonumber(self.settings:readSetting("sync_interval")) or 0
     self.sync_on_start = self.settings:isTrue("sync_on_start")
@@ -215,6 +216,7 @@ function KoboSync:saveSettings()
     self.settings:saveSetting("download_mode", self.download_mode)
     self.settings:saveSetting("upload_on_close", self.upload_on_close)
     self.settings:saveSetting("sync_collections", self.sync_collections)
+    self.settings:saveSetting("download_shelves", self.download_shelves)
     self.settings:saveSetting("sync_interval", self.sync_interval)
     self.settings:saveSetting("sync_on_start", self.sync_on_start)
     self.settings:saveSetting("last_sync", self.last_sync)
@@ -465,6 +467,23 @@ function KoboSync:addToMainMenu(menu_items)
                 end,
             },
             {
+                -- Only matters on demand: keeping every book already covers
+                -- the shelves.
+                text_func = function()
+                    return T(_("Download books on synced shelves: %1"),
+                        self:onOffText(self.download_shelves))
+                end,
+                help_text = _("Downloads the books on the shelves your server syncs, "
+                    .. "even when the rest of the library is downloaded on demand."),
+                enabled_func = function() return self.download_mode ~= "auto" end,
+                keep_menu_open = true,
+                callback = function(touchmenu_instance)
+                    self.download_shelves = not self.download_shelves
+                    self:saveSettings()
+                    self:refreshMenu(touchmenu_instance)
+                end,
+            },
+            {
                 text_func = function()
                     return T(_("Shelves as collections: %1"), self:onOffText(self.sync_collections))
                 end,
@@ -656,7 +675,8 @@ function KoboSync:doSync(opts)
         return
     end
 
-    local plan = SyncEngine.plan_downloads(state, self.download_mode)
+    local plan = SyncEngine.plan_downloads(state, self.download_mode,
+        { shelves = self.download_shelves })
     self:maybeConfirmDownloads(plan, first_sync, function(confirmed)
         local downloaded, failed = 0, 0
         if confirmed then

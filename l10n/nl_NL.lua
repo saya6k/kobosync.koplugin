@@ -23,12 +23,16 @@ return {
         "Downloaden",
     ["Download all %1 books"] =
         "Alle %1 boeken downloaden",
+    ["Download books on synced shelves: %1"] =
+        "Boeken op gesynchroniseerde planken downloaden: %1",
     ["Download folder: %1"] =
         "Downloadmap: %1",
     ["Downloaded: %1"] =
         "Gedownload: %1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "Downloadt elk boek in de bibliotheek en haalt nieuwe op zodra ze verschijnen; bij een eerste synchronisatie betekent dat de hele bibliotheek. Uitgeschakeld werkt synchronisatie alleen de catalogus bij en worden boeken één voor één opgehaald via de serverbibliotheek.",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "Downloadt de boeken op de planken die je server synchroniseert, ook als de rest van de bibliotheek op aanvraag wordt gedownload.",
     ["Every %1 minutes"] =
         "Elke %1 minuten",
     ["Failed downloads: %1"] =

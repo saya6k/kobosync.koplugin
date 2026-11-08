@@ -23,12 +23,16 @@ return {
         "Download",
     ["Download all %1 books"] =
         "Download all %1 books",
+    ["Download books on synced shelves: %1"] =
+        "Download books on synced shelves: %1",
     ["Download folder: %1"] =
         "Download folder: %1",
     ["Downloaded: %1"] =
         "Downloaded: %1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser.",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand.",
     ["Every %1 minutes"] =
         "Every %1 minutes",
     ["Failed downloads: %1"] =

@@ -150,6 +150,45 @@ describe("SyncEngine metadata fill-in", function()
     end)
 end)
 
+describe("SyncEngine.plan_downloads with shelves", function()
+    local function catalog()
+        local store = new_store()
+        SyncEngine.process_items(store, {
+            { NewEntitlement = entitlement("shelved") },
+            { NewEntitlement = entitlement("by-rev", { revision = "rev-1" }) },
+            { NewEntitlement = entitlement("loose") },
+        }, SyncEngine.new_result())
+        store:set_tag("t1", { name = "S", books = { "shelved", "rev-1", "unknown" } })
+        return store
+    end
+
+    local function uuids(plan)
+        local out = {}
+        for _idx, item in ipairs(plan) do table.insert(out, item.uuid) end
+        table.sort(out)
+        return out
+    end
+
+    it("fetches shelf books on demand when asked to", function()
+        local plan = SyncEngine.plan_downloads(catalog(), "on_demand", { shelves = true })
+        assert.are.same({ "by-rev", "shelved" }, uuids(plan))
+    end)
+
+    it("leaves shelves alone without the option", function()
+        assert.are.same({}, uuids(SyncEngine.plan_downloads(catalog(), "on_demand")))
+    end)
+
+    it("does not fetch a shelf book that is already here", function()
+        local store = catalog()
+        local pick = SyncEngine.pick_download(store:get_book("shelved").download_urls)
+        store:upsert_book("shelved", {
+            downloaded = true, downloaded_revision = "shelved", downloaded_size = pick.Size,
+        })
+        local plan = SyncEngine.plan_downloads(store, "on_demand", { shelves = true })
+        assert.are.same({ "by-rev" }, uuids(plan))
+    end)
+end)
+
 -- Shaped like calibre-web's create_kobo_tag: members named by book uuid.
 local function tag(id, name, members)
     local items = {}

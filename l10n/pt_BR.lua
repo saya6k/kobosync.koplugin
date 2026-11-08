@@ -23,12 +23,16 @@ return {
         "Baixar",
     ["Download all %1 books"] =
         "Baixar todos os %1 livros",
+    ["Download books on synced shelves: %1"] =
+        "Baixar livros das estantes sincronizadas: %1",
     ["Download folder: %1"] =
         "Pasta de download: %1",
     ["Downloaded: %1"] =
         "Baixados: %1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "Baixa todos os livros da biblioteca e busca os novos conforme chegam; em uma primeira sincronização isso significa a biblioteca inteira. Quando desativado, a sincronização apenas atualiza o catálogo e os livros são baixados um a um pelo navegador da biblioteca do servidor.",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "Baixa os livros das estantes que o seu servidor sincroniza, mesmo quando o resto da biblioteca é baixado sob demanda.",
     ["Every %1 minutes"] =
         "A cada %1 minutos",
     ["Failed downloads: %1"] =

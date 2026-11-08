@@ -36,7 +36,7 @@ Or install it via [appstore.koplugin](https://github.com/omer-faruq/appstore.kop
 
 - Reading positions are exchanged as **percentages** (the Kobo protocol's kepub spans cannot be mapped to KOReader positions). The kepub location from other Kobo devices is preserved untouched.
 - Shelves sync one way, server to device: collection changes made in KOReader are not sent back. Annotations and highlights are not synced.
-- A shelf only becomes a collection once at least one of its books is downloaded.
+- A shelf only becomes a collection once at least one of its books is downloaded. In on-demand mode, *Download books on synced shelves* (on by default) fetches shelf books during a sync you start yourself, so their collections fill straight away.
 - Upgrading from 0.5 or earlier: the server already counts its shelves as delivered, so a shelf shows up once it changes on the server (e.g. a book is added), or right away after *Reset sync*.
 - The first sync of a large library can take a while; you will be asked before bulk downloads start.
 - *Reset sync* (in the menu) forgets the catalog and sync token but keeps downloaded files.

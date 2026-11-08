@@ -23,12 +23,16 @@ return {
         "Tải xuống",
     ["Download all %1 books"] =
         "Tải toàn bộ %1 cuốn",
+    ["Download books on synced shelves: %1"] =
+        "Tải sách trên các kệ được đồng bộ: %1",
     ["Download folder: %1"] =
         "Thư mục tải xuống: %1",
     ["Downloaded: %1"] =
         "Đã tải: %1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "Tải mọi cuốn sách trong thư viện và lấy sách mới khi chúng xuất hiện; ở lần đồng bộ đầu tiên, điều đó có nghĩa là toàn bộ thư viện. Khi tắt, đồng bộ chỉ cập nhật danh mục và sách được tải từng cuốn từ trình duyệt thư viện máy chủ.",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "Tải xuống sách trên các kệ mà máy chủ đồng bộ, ngay cả khi phần còn lại của thư viện được tải theo yêu cầu.",
     ["Every %1 minutes"] =
         "Mỗi %1 phút",
     ["Failed downloads: %1"] =
