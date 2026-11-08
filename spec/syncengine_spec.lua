@@ -116,6 +116,40 @@ describe("SyncEngine.process_items", function()
     end)
 end)
 
+describe("SyncEngine metadata fill-in", function()
+    local function state_only(store, uuid)
+        SyncEngine.process_items(store, {
+            { ChangedReadingState = { ReadingState = {
+                EntitlementId = uuid, LastModified = "2026-07-24T03:12:25Z",
+            } } },
+        }, SyncEngine.new_result())
+    end
+
+    it("lists entries the server sent only a reading state for", function()
+        local store = new_store()
+        SyncEngine.process_items(store, { { NewEntitlement = entitlement("full") } },
+            SyncEngine.new_result())
+        state_only(store, "stub-b")
+        state_only(store, "stub-a")
+        store:upsert_book("gone", { metadata_unavailable = true })
+        assert.are.same({ "stub-a", "stub-b" }, SyncEngine.books_missing_metadata(store))
+    end)
+
+    it("fills an entry from metadata and keeps its reading state", function()
+        local store = new_store()
+        state_only(store, "u1")
+        SyncEngine.apply_metadata(store, "u1", entitlement("u1", {
+            title = "Filled", series = { Name = "S", Number = 2 },
+        }).BookMetadata)
+        local book = store:get_book("u1")
+        assert.are.equal("Filled", book.title)
+        assert.are.equal("S", book.series_name)
+        assert.is_truthy(SyncEngine.pick_download(book.download_urls))
+        assert.are.equal("u1", book.server_state.EntitlementId)
+        assert.are.same({}, SyncEngine.books_missing_metadata(store))
+    end)
+end)
+
 -- Shaped like calibre-web's create_kobo_tag: members named by book uuid.
 local function tag(id, name, members)
     local items = {}

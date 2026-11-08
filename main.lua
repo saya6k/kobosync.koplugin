@@ -628,6 +628,10 @@ function KoboSync:doSync(opts)
     self.last_sync = os.time()
     self:saveSettings()
 
+    -- Counted as new: until now the device had nothing for them but a uuid.
+    result.new = result.new + self:fillMissingMetadata(state, api)
+    state:save()
+
     Trapper:info(_("Kobo Sync: syncing reading progress…"))
     local pushed, pulled = self:applyReadingStates(state, api)
     state:save()
@@ -672,6 +676,28 @@ function KoboSync:doSync(opts)
             self:reportSync(result, downloaded, failed, pushed, pulled, missing, false)
         end)
     end)
+end
+
+-- Asks for the metadata of every catalog entry the sync left without any,
+-- one book at a time. Stops at the first failure that is not the server
+-- saying it has no such book: with the network gone, every further request
+-- would only wait out its own timeout. What is left is tried next sync.
+function KoboSync:fillMissingMetadata(state, api)
+    local filled = 0
+    for _idx, uuid in ipairs(SyncEngine.books_missing_metadata(state)) do
+        if self.sync_cancelled then break end
+        local bm, err, unavailable = api:get_metadata(uuid)
+        if bm then
+            SyncEngine.apply_metadata(state, uuid, bm)
+            filled = filled + 1
+        elseif unavailable then
+            state:upsert_book(uuid, { metadata_unavailable = true })
+        else
+            logger.warn("KoboSync: metadata request failed:", uuid, err)
+            break
+        end
+    end
+    return filled
 end
 
 -- A scheduled run reports through a toast: it neither covers the page being

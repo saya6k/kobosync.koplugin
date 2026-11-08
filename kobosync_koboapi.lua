@@ -152,6 +152,31 @@ function KoboApi:get_initialization()
     return self:_request_json("GET", "/v1/initialization")
 end
 
+-- One book's BookMetadata, in the shape a sync item carries it. calibre-web
+-- answers with a one-element list. Goes through sync_request: it is asked once
+-- per book that lacks metadata, which after a server-side reset is dozens.
+-- An HTTP error means the server has no such book (calibre-web redirects to
+-- the Kobo store for those); a transport error is worth trying again.
+function KoboApi:get_metadata(book_uuid)
+    local resp, err = self.sync_request({
+        url = self.base_url .. "/v1/library/" .. book_uuid .. "/metadata",
+        method = "GET",
+        headers = { ["Accept"] = "application/json" },
+    })
+    if not resp then
+        return nil, err or "network error"
+    end
+    if resp.code ~= 200 then
+        return nil, "HTTP " .. tostring(resp.code), true
+    end
+    local ok, decoded = pcall(self.json.decode, resp.body)
+    local bm = ok and type(decoded) == "table" and (decoded[1] or decoded)
+    if type(bm) ~= "table" or not bm.Title then
+        return nil, "invalid metadata response", true
+    end
+    return bm
+end
+
 function KoboApi:get_state(book_uuid)
     return self:_request_json("GET", "/v1/library/" .. book_uuid .. "/state")
 end

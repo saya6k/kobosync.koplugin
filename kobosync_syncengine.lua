@@ -113,6 +113,49 @@ function SyncEngine.extra_metadata(bm, be)
     return next(meta) and meta or nil
 end
 
+-- Catalog fields from a book's metadata; be is the entitlement, absent when
+-- the metadata was asked for on its own.
+local function entry_fields(bm, be)
+    local fields = {
+        title = bm.Title,
+        author = join_contributors(bm.Contributors),
+        download_urls = bm.DownloadUrls,
+        revision_id = bm.RevisionId or be.RevisionId,
+        last_modified = be.LastModified,
+        cover_id = bm.CoverImageId,
+    }
+    if type(bm.Series) == "table" then
+        fields.series_name = bm.Series.Name
+        fields.series_number = bm.Series.NumberFloat or bm.Series.Number
+        fields.series_id = bm.Series.Id
+    end
+    fields.metadata = SyncEngine.extra_metadata(bm, be)
+    return fields
+end
+
+-- Catalog entries the server sent a reading state for but never the book:
+-- calibre-web remembers which books a device already has and does not send
+-- them again, even after the device forgets its sync token. Such an entry has
+-- no title and no download link, so the browser can only show its uuid.
+-- Entries the server said it has no book for are left out, so they are not
+-- asked about on every sync.
+function SyncEngine.books_missing_metadata(store)
+    local missing = {}
+    for _idx, book in ipairs(store:list_books()) do
+        if not book.download_urls and not book.metadata_unavailable then
+            table.insert(missing, book.uuid)
+        end
+    end
+    table.sort(missing)
+    return missing
+end
+
+-- Fills a catalog entry from metadata fetched on its own (see KoboApi
+-- get_metadata). Local fields such as the reading state are kept.
+function SyncEngine.apply_metadata(store, uuid, bm)
+    store:upsert_book(uuid, entry_fields(bm, {}))
+end
+
 local function process_entitlement(store, e, is_new, result)
     local uuid = entitlement_uuid(e)
     if not uuid then return end
@@ -132,21 +175,7 @@ local function process_entitlement(store, e, is_new, result)
         result.removed = result.removed + 1
         return
     end
-    local bm = e.BookMetadata or {}
-    local fields = {
-        title = bm.Title,
-        author = join_contributors(bm.Contributors),
-        download_urls = bm.DownloadUrls,
-        revision_id = bm.RevisionId or be.RevisionId,
-        last_modified = be.LastModified,
-        cover_id = bm.CoverImageId,
-    }
-    if type(bm.Series) == "table" then
-        fields.series_name = bm.Series.Name
-        fields.series_number = bm.Series.NumberFloat or bm.Series.Number
-        fields.series_id = bm.Series.Id
-    end
-    fields.metadata = SyncEngine.extra_metadata(bm, be)
+    local fields = entry_fields(e.BookMetadata or {}, be)
     if e.ReadingState then
         fields.server_state = e.ReadingState
     end
