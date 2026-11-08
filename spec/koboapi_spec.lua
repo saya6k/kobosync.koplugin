@@ -65,6 +65,43 @@ describe("KoboApi.sync", function()
         assert.are.equal("t2", calls[3].headers["x-kobo-synctoken"])
     end)
 
+    it("ends a walk the server answers with the same token and page again", function()
+        -- calibre-web with only selected shelves syncing: the same reading
+        -- states and the same token, with "continue", for as long as asked.
+        local stuck = '[{"ChangedReadingState":{"ReadingState":{"EntitlementId":"u1"}}}]'
+        local api, calls = api_with({
+            { code = 200, headers = { ["x-kobo-synctoken"] = "t1", ["x-kobo-sync"] = "continue" },
+              body = '[{"NewEntitlement":{}}]' },
+            { code = 200, headers = { ["x-kobo-synctoken"] = "t2", ["x-kobo-sync"] = "continue" },
+              body = stuck },
+            { code = 200, headers = { ["x-kobo-synctoken"] = "t2", ["x-kobo-sync"] = "continue" },
+              body = stuck },
+        })
+        local pages = 0
+        local token, err = api:sync(nil, function() pages = pages + 1 end)
+        assert.is_nil(err)
+        assert.are.equal("t2", token)
+        assert.are.equal(3, #calls)
+        -- The repeated page is not handed on: it was processed already.
+        assert.are.equal(2, pages)
+    end)
+
+    it("keeps walking when only the page repeats or only the token does", function()
+        local same = '[{"NewEntitlement":{}}]'
+        local api, calls = api_with({
+            { code = 200, headers = { ["x-kobo-synctoken"] = "t1", ["x-kobo-sync"] = "continue" },
+              body = same },
+            { code = 200, headers = { ["x-kobo-synctoken"] = "t2", ["x-kobo-sync"] = "continue" },
+              body = same },
+            { code = 200, headers = { ["x-kobo-synctoken"] = "t2", ["x-kobo-sync"] = "continue" },
+              body = '[{"ChangedEntitlement":{}}]' },
+            { code = 200, headers = { ["x-kobo-synctoken"] = "t3" }, body = "[]" },
+        })
+        local token = api:sync(nil, function() end)
+        assert.are.equal("t3", token)
+        assert.are.equal(4, #calls)
+    end)
+
     it("reads response headers case-insensitively", function()
         local api = select(1, api_with({
             { code = 200, headers = { ["X-Kobo-SyncToken"] = "TOK" }, body = "[]" },
