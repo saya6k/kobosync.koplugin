@@ -23,12 +23,16 @@ return {
         "下載",
     ["Download all %1 books"] =
         "下載全部 %1 本",
+    ["Download books on synced shelves: %1"] =
+        "下載已同步書架上的書籍：%1",
     ["Download folder: %1"] =
         "下載資料夾：%1",
     ["Downloaded: %1"] =
         "已下載：%1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "下載書庫中的每一本書，並在有新書時持續取得；首次同步時這代表整個書庫。關閉後，同步只更新目錄，書籍需在伺服器書庫瀏覽器中逐本下載。",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "下載伺服器同步的書架上的書籍，即使書庫的其餘部分為按需下載。",
     ["Every %1 minutes"] =
         "每 %1 分鐘",
     ["Failed downloads: %1"] =
@@ -101,6 +105,8 @@ return {
         "上次同步：%1",
     ["Matches book titles and series names."] =
         "搜尋書名與系列名稱。",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "將伺服器同步的書架對應為 KOReader 收藏集，每個收藏集包含該書架中已在本裝置上的書籍。您自行加入這些收藏集的書籍不會被更動。",
     ["Missing locally: %1"] =
         "本機缺少：%1",
     ["Not now"] =
@@ -133,6 +139,8 @@ return {
         "伺服器：%1",
     ["Set server URL"] =
         "設定伺服器網址",
+    ["Shelves as collections: %1"] =
+        "書架作為收藏集：%1",
     ["Show all books"] =
         "顯示所有書籍",
     ["Show downloaded only"] =

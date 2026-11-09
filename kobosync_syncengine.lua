@@ -113,6 +113,49 @@ function SyncEngine.extra_metadata(bm, be)
     return next(meta) and meta or nil
 end
 
+-- Catalog fields from a book's metadata; be is the entitlement, absent when
+-- the metadata was asked for on its own.
+local function entry_fields(bm, be)
+    local fields = {
+        title = bm.Title,
+        author = join_contributors(bm.Contributors),
+        download_urls = bm.DownloadUrls,
+        revision_id = bm.RevisionId or be.RevisionId,
+        last_modified = be.LastModified,
+        cover_id = bm.CoverImageId,
+    }
+    if type(bm.Series) == "table" then
+        fields.series_name = bm.Series.Name
+        fields.series_number = bm.Series.NumberFloat or bm.Series.Number
+        fields.series_id = bm.Series.Id
+    end
+    fields.metadata = SyncEngine.extra_metadata(bm, be)
+    return fields
+end
+
+-- Catalog entries the server sent a reading state for but never the book:
+-- calibre-web remembers which books a device already has and does not send
+-- them again, even after the device forgets its sync token. Such an entry has
+-- no title and no download link, so the browser can only show its uuid.
+-- Entries the server said it has no book for are left out, so they are not
+-- asked about on every sync.
+function SyncEngine.books_missing_metadata(store)
+    local missing = {}
+    for _idx, book in ipairs(store:list_books()) do
+        if not book.download_urls and not book.metadata_unavailable then
+            table.insert(missing, book.uuid)
+        end
+    end
+    table.sort(missing)
+    return missing
+end
+
+-- Fills a catalog entry from metadata fetched on its own (see KoboApi
+-- get_metadata). Local fields such as the reading state are kept.
+function SyncEngine.apply_metadata(store, uuid, bm)
+    store:upsert_book(uuid, entry_fields(bm, {}))
+end
+
 local function process_entitlement(store, e, is_new, result)
     local uuid = entitlement_uuid(e)
     if not uuid then return end
@@ -132,21 +175,7 @@ local function process_entitlement(store, e, is_new, result)
         result.removed = result.removed + 1
         return
     end
-    local bm = e.BookMetadata or {}
-    local fields = {
-        title = bm.Title,
-        author = join_contributors(bm.Contributors),
-        download_urls = bm.DownloadUrls,
-        revision_id = bm.RevisionId or be.RevisionId,
-        last_modified = be.LastModified,
-        cover_id = bm.CoverImageId,
-    }
-    if type(bm.Series) == "table" then
-        fields.series_name = bm.Series.Name
-        fields.series_number = bm.Series.NumberFloat or bm.Series.Number
-        fields.series_id = bm.Series.Id
-    end
-    fields.metadata = SyncEngine.extra_metadata(bm, be)
+    local fields = entry_fields(e.BookMetadata or {}, be)
     if e.ReadingState then
         fields.server_state = e.ReadingState
     end
@@ -163,6 +192,22 @@ local function process_entitlement(store, e, is_new, result)
     end
 end
 
+-- Stores a shelf with its members. calibre-web names each member by the book
+-- uuid in RevisionId, which is also its entitlement id; other servers may use a
+-- real revision id, so the ids are kept as sent and resolved against the
+-- catalog only when collections are built.
+local function process_tag(store, tag)
+    if type(tag) ~= "table" or not tag.Id then return end
+    if not tag.Name or tag.Name == "" then return end
+    local books = {}
+    for _idx, item in ipairs(type(tag.Items) == "table" and tag.Items or {}) do
+        if item.RevisionId then
+            table.insert(books, item.RevisionId)
+        end
+    end
+    store:set_tag(tag.Id, { name = tag.Name, books = books })
+end
+
 -- Processes one page of sync items into the store, accumulating into result
 -- (from new_result()). Unknown item types and fields are ignored.
 function SyncEngine.process_items(store, items, result)
@@ -177,8 +222,15 @@ function SyncEngine.process_items(store, items, result)
                 store:upsert_book(state.EntitlementId, { server_state = state })
                 result.states = result.states + 1
             end
+        elseif item.NewTag or item.ChangedTag then
+            process_tag(store, (item.NewTag or item.ChangedTag).Tag)
+        elseif item.DeletedTag then
+            local tag = item.DeletedTag.Tag
+            if tag and tag.Id then
+                store:remove_tag(tag.Id)
+            end
         end
-        -- NewTag/ChangedTag/DeletedTag and anything else: ignored in v1.
+        -- Anything else: ignored.
     end
     return result
 end
@@ -401,7 +453,8 @@ end
 
 -- Computes which catalog books need downloading.
 -- mode "auto": every book we do not have yet, plus stale re-downloads.
--- mode "on_demand": stale re-downloads only (of books the user already has).
+-- mode "on_demand": stale re-downloads only (of books the user already has),
+-- plus books on synced shelves when opts.shelves is set.
 -- A downloaded book is stale when the server revision or file size changed.
 -- Clears the downloaded flag on catalog entries whose file is gone, i.e. books
 -- deleted on the device outside the plugin. Left alone they keep their tick in
@@ -441,7 +494,32 @@ local function plan_entry(book, pick)
     }
 end
 
-function SyncEngine.plan_downloads(store, mode)
+-- Catalog uuids of every book on a synced shelf. Members are named as the
+-- server sent them, by uuid or by revision id, so both are resolved.
+function SyncEngine.shelf_members(store)
+    local by_revision = {}
+    for _idx, book in ipairs(store:list_books()) do
+        if book.revision_id then
+            by_revision[book.revision_id] = book.uuid
+        end
+    end
+    local members = {}
+    for _id, tag in pairs(store:tags()) do
+        for _idx, member in ipairs(tag.books or {}) do
+            local uuid = store:get_book(member) and member or by_revision[member]
+            if uuid then
+                members[uuid] = true
+            end
+        end
+    end
+    return members
+end
+
+-- opts.shelves: also fetch books on synced shelves in on_demand mode. Putting
+-- a book on a shelf that syncs to the device is asking for it there.
+function SyncEngine.plan_downloads(store, mode, opts)
+    opts = opts or {}
+    local on_shelf = opts.shelves and SyncEngine.shelf_members(store) or {}
     local plan = {}
     for _idx, book in ipairs(store:list_books()) do
         local pick = SyncEngine.pick_download(book.download_urls)
@@ -450,7 +528,7 @@ function SyncEngine.plan_downloads(store, mode)
             if book.downloaded then
                 want = is_stale(book, pick)
             else
-                want = mode == "auto"
+                want = mode == "auto" or on_shelf[book.uuid] == true
             end
             if want then
                 table.insert(plan, plan_entry(book, pick))

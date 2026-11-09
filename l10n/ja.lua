@@ -23,12 +23,16 @@ return {
         "ダウンロード",
     ["Download all %1 books"] =
         "%1 冊すべてダウンロード",
+    ["Download books on synced shelves: %1"] =
+        "同期された本棚の本をダウンロード: %1",
     ["Download folder: %1"] =
         "ダウンロード先: %1",
     ["Downloaded: %1"] =
         "ダウンロード済み: %1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "ライブラリのすべての本をダウンロードし、新しい本が追加されるたびに取得します。初回同期ではライブラリ全体が対象になります。無効にすると同期はカタログの更新のみを行い、本はサーバーライブラリの閲覧画面から 1 冊ずつダウンロードします。",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "サーバーが同期する本棚の本をダウンロードします。ライブラリの他の本がオンデマンドの場合でも同様です。",
     ["Every %1 minutes"] =
         "%1 分ごと",
     ["Failed downloads: %1"] =
@@ -101,6 +105,8 @@ return {
         "最終同期: %1",
     ["Matches book titles and series names."] =
         "本のタイトルとシリーズ名を検索します。",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "サーバーが同期する本棚を KOReader のコレクションに反映します。各コレクションには、その本棚の本のうちこの端末にあるものが入ります。自分でコレクションに追加した本はそのまま残ります。",
     ["Missing locally: %1"] =
         "ローカルに存在しません: %1",
     ["Not now"] =
@@ -133,6 +139,8 @@ return {
         "サーバー: %1",
     ["Set server URL"] =
         "サーバー URL を設定",
+    ["Shelves as collections: %1"] =
+        "本棚をコレクションに: %1",
     ["Show all books"] =
         "すべての本を表示",
     ["Show downloaded only"] =

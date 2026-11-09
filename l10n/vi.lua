@@ -23,12 +23,16 @@ return {
         "Tải xuống",
     ["Download all %1 books"] =
         "Tải toàn bộ %1 cuốn",
+    ["Download books on synced shelves: %1"] =
+        "Tải sách trên các kệ được đồng bộ: %1",
     ["Download folder: %1"] =
         "Thư mục tải xuống: %1",
     ["Downloaded: %1"] =
         "Đã tải: %1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "Tải mọi cuốn sách trong thư viện và lấy sách mới khi chúng xuất hiện; ở lần đồng bộ đầu tiên, điều đó có nghĩa là toàn bộ thư viện. Khi tắt, đồng bộ chỉ cập nhật danh mục và sách được tải từng cuốn từ trình duyệt thư viện máy chủ.",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "Tải xuống sách trên các kệ mà máy chủ đồng bộ, ngay cả khi phần còn lại của thư viện được tải theo yêu cầu.",
     ["Every %1 minutes"] =
         "Mỗi %1 phút",
     ["Failed downloads: %1"] =
@@ -101,6 +105,8 @@ return {
         "Đồng bộ lần cuối: %1",
     ["Matches book titles and series names."] =
         "Tìm trong tên sách và tên bộ sách.",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "Phản chiếu các kệ sách mà máy chủ đồng bộ thành bộ sưu tập KOReader, mỗi bộ chứa những cuốn sách của kệ đó đang có trên thiết bị này. Sách bạn tự thêm vào các bộ sưu tập đó sẽ được giữ nguyên.",
     ["Missing locally: %1"] =
         "Thiếu ở máy: %1",
     ["Not now"] =
@@ -133,6 +139,8 @@ return {
         "Máy chủ: %1",
     ["Set server URL"] =
         "Đặt URL máy chủ",
+    ["Shelves as collections: %1"] =
+        "Kệ sách thành bộ sưu tập: %1",
     ["Show all books"] =
         "Hiện mọi cuốn sách",
     ["Show downloaded only"] =

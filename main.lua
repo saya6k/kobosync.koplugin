@@ -24,6 +24,7 @@ local T = ffiUtil.template
 
 local Event = require("ui/event")
 
+local Collections = require("kobosync_collections")
 local KoboApi = require("kobosync_koboapi")
 local ReadingState = require("kobosync_readingstate")
 local StateStore = require("kobosync_statestore")
@@ -99,6 +100,8 @@ function KoboSync:init()
         or DataStorage:getDataDir() .. "/kobosync"
     self.download_mode = self.settings:readSetting("download_mode") or "auto"
     self.upload_on_close = self.settings:nilOrTrue("upload_on_close")
+    self.sync_collections = self.settings:nilOrTrue("sync_collections")
+    self.download_shelves = self.settings:nilOrTrue("download_shelves")
     -- Minutes between unattended syncs; 0 is off.
     self.sync_interval = tonumber(self.settings:readSetting("sync_interval")) or 0
     self.sync_on_start = self.settings:isTrue("sync_on_start")
@@ -212,6 +215,8 @@ function KoboSync:saveSettings()
     self.settings:saveSetting("download_dir", self.download_dir)
     self.settings:saveSetting("download_mode", self.download_mode)
     self.settings:saveSetting("upload_on_close", self.upload_on_close)
+    self.settings:saveSetting("sync_collections", self.sync_collections)
+    self.settings:saveSetting("download_shelves", self.download_shelves)
     self.settings:saveSetting("sync_interval", self.sync_interval)
     self.settings:saveSetting("sync_on_start", self.sync_on_start)
     self.settings:saveSetting("last_sync", self.last_sync)
@@ -462,6 +467,38 @@ function KoboSync:addToMainMenu(menu_items)
                 end,
             },
             {
+                -- Only matters on demand: keeping every book already covers
+                -- the shelves.
+                text_func = function()
+                    return T(_("Download books on synced shelves: %1"),
+                        self:onOffText(self.download_shelves))
+                end,
+                help_text = _("Downloads the books on the shelves your server syncs, "
+                    .. "even when the rest of the library is downloaded on demand."),
+                enabled_func = function() return self.download_mode ~= "auto" end,
+                keep_menu_open = true,
+                callback = function(touchmenu_instance)
+                    self.download_shelves = not self.download_shelves
+                    self:saveSettings()
+                    self:refreshMenu(touchmenu_instance)
+                end,
+            },
+            {
+                text_func = function()
+                    return T(_("Shelves as collections: %1"), self:onOffText(self.sync_collections))
+                end,
+                help_text = _("Mirrors the shelves your server syncs into KOReader collections, "
+                    .. "each holding the books from its shelf that are on this device. "
+                    .. "Books you add to those collections yourself are left alone."),
+                keep_menu_open = true,
+                callback = function(touchmenu_instance)
+                    self.sync_collections = not self.sync_collections
+                    self:saveSettings()
+                    self:syncCollections(self:getState())
+                    self:refreshMenu(touchmenu_instance)
+                end,
+            },
+            {
                 text_func = function()
                     return T(_("Upload reading progress when closing a book: %1"),
                         self:onOffText(self.upload_on_close))
@@ -610,6 +647,10 @@ function KoboSync:doSync(opts)
     self.last_sync = os.time()
     self:saveSettings()
 
+    -- Counted as new: until now the device had nothing for them but a uuid.
+    result.new = result.new + self:fillMissingMetadata(state, api)
+    state:save()
+
     Trapper:info(_("Kobo Sync: syncing reading progress…"))
     local pushed, pulled = self:applyReadingStates(state, api)
     state:save()
@@ -629,11 +670,13 @@ function KoboSync:doSync(opts)
     if opts.scheduled then
         state:queue_deletions(result.delete_candidates)
         state:save()
+        self:syncCollections(state)
         self:reportSync(result, 0, 0, pushed, pulled, missing, true)
         return
     end
 
-    local plan = SyncEngine.plan_downloads(state, self.download_mode)
+    local plan = SyncEngine.plan_downloads(state, self.download_mode,
+        { shelves = self.download_shelves })
     self:maybeConfirmDownloads(plan, first_sync, function(confirmed)
         local downloaded, failed = 0, 0
         if confirmed then
@@ -648,9 +691,33 @@ function KoboSync:doSync(opts)
         self:confirmDeletions(state, candidates, function()
             state:clear_pending_deletions()
             state:save()
+            -- Last, so books downloaded or deleted just now are accounted for.
+            self:syncCollections(state)
             self:reportSync(result, downloaded, failed, pushed, pulled, missing, false)
         end)
     end)
+end
+
+-- Asks for the metadata of every catalog entry the sync left without any,
+-- one book at a time. Stops at the first failure that is not the server
+-- saying it has no such book: with the network gone, every further request
+-- would only wait out its own timeout. What is left is tried next sync.
+function KoboSync:fillMissingMetadata(state, api)
+    local filled = 0
+    for _idx, uuid in ipairs(SyncEngine.books_missing_metadata(state)) do
+        if self.sync_cancelled then break end
+        local bm, err, unavailable = api:get_metadata(uuid)
+        if bm then
+            SyncEngine.apply_metadata(state, uuid, bm)
+            filled = filled + 1
+        elseif unavailable then
+            state:upsert_book(uuid, { metadata_unavailable = true })
+        else
+            logger.warn("KoboSync: metadata request failed:", uuid, err)
+            break
+        end
+    end
+    return filled
 end
 
 -- A scheduled run reports through a toast: it neither covers the page being
@@ -850,6 +917,34 @@ function KoboSync:downloadBook(state, api, item)
         state:upsert_book(item.uuid, { applied_state_time = book.server_state.LastModified })
     end
     return true
+end
+
+-- Brings KOReader's collections in line with the server shelves. Called after
+-- anything that changes which books are on the device, not per download: each
+-- run rewrites the collection file.
+function KoboSync:syncCollections(state)
+    if not self.sync_collections then return end
+    local ok, ReadCollection = pcall(require, "readcollection")
+    -- Older KOReader has only favorites, with no named collections to mirror
+    -- shelves into.
+    if not ok or type(ReadCollection) ~= "table"
+            or type(ReadCollection.addCollection) ~= "function" then
+        return
+    end
+    -- ReadCollection is used as it stands in memory, never reloaded with
+    -- _read(): that rebuilds every collection from disk and drops changes
+    -- KOReader's own collections screen, or a plugin such as SimpleUI, has
+    -- made but not written yet. KOReader reads the file once, at startup, and
+    -- every edit since goes through this same table.
+    local done, err = pcall(function()
+        local desired = Collections.desired(state, ffiUtil.realpath)
+        state:set_applied_collections(
+            Collections.apply(ReadCollection, desired, state:applied_collections()))
+        state:save()
+    end)
+    if not done then
+        logger.warn("KoboSync: could not update collections:", err)
+    end
 end
 
 -- Reads the KOReader sidecar for a closed book; nil when never opened.

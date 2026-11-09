@@ -106,13 +106,144 @@ describe("SyncEngine.process_items", function()
         assert.are.equal(3.72, store:get_book("u1").server_state.CurrentBookmark.ProgressPercent)
     end)
 
-    it("ignores tags and unknown item types", function()
+    it("ignores unknown item types", function()
         local store = new_store()
         local result = SyncEngine.new_result()
         SyncEngine.process_items(store, {
-            { DeletedTag = { Tag = { Id = "t1" } } },
-            { NewTag = { Tag = { Id = "t2" } } },
             { SomethingFromTheFuture = { Whatever = true } },
+        }, result)
+        assert.are.equal(0, result.new + result.changed + result.states + result.removed)
+    end)
+end)
+
+describe("SyncEngine metadata fill-in", function()
+    local function state_only(store, uuid)
+        SyncEngine.process_items(store, {
+            { ChangedReadingState = { ReadingState = {
+                EntitlementId = uuid, LastModified = "2026-07-24T03:12:25Z",
+            } } },
+        }, SyncEngine.new_result())
+    end
+
+    it("lists entries the server sent only a reading state for", function()
+        local store = new_store()
+        SyncEngine.process_items(store, { { NewEntitlement = entitlement("full") } },
+            SyncEngine.new_result())
+        state_only(store, "stub-b")
+        state_only(store, "stub-a")
+        store:upsert_book("gone", { metadata_unavailable = true })
+        assert.are.same({ "stub-a", "stub-b" }, SyncEngine.books_missing_metadata(store))
+    end)
+
+    it("fills an entry from metadata and keeps its reading state", function()
+        local store = new_store()
+        state_only(store, "u1")
+        SyncEngine.apply_metadata(store, "u1", entitlement("u1", {
+            title = "Filled", series = { Name = "S", Number = 2 },
+        }).BookMetadata)
+        local book = store:get_book("u1")
+        assert.are.equal("Filled", book.title)
+        assert.are.equal("S", book.series_name)
+        assert.is_truthy(SyncEngine.pick_download(book.download_urls))
+        assert.are.equal("u1", book.server_state.EntitlementId)
+        assert.are.same({}, SyncEngine.books_missing_metadata(store))
+    end)
+end)
+
+describe("SyncEngine.plan_downloads with shelves", function()
+    local function catalog()
+        local store = new_store()
+        SyncEngine.process_items(store, {
+            { NewEntitlement = entitlement("shelved") },
+            { NewEntitlement = entitlement("by-rev", { revision = "rev-1" }) },
+            { NewEntitlement = entitlement("loose") },
+        }, SyncEngine.new_result())
+        store:set_tag("t1", { name = "S", books = { "shelved", "rev-1", "unknown" } })
+        return store
+    end
+
+    local function uuids(plan)
+        local out = {}
+        for _idx, item in ipairs(plan) do table.insert(out, item.uuid) end
+        table.sort(out)
+        return out
+    end
+
+    it("fetches shelf books on demand when asked to", function()
+        local plan = SyncEngine.plan_downloads(catalog(), "on_demand", { shelves = true })
+        assert.are.same({ "by-rev", "shelved" }, uuids(plan))
+    end)
+
+    it("leaves shelves alone without the option", function()
+        assert.are.same({}, uuids(SyncEngine.plan_downloads(catalog(), "on_demand")))
+    end)
+
+    it("does not fetch a shelf book that is already here", function()
+        local store = catalog()
+        local pick = SyncEngine.pick_download(store:get_book("shelved").download_urls)
+        store:upsert_book("shelved", {
+            downloaded = true, downloaded_revision = "shelved", downloaded_size = pick.Size,
+        })
+        local plan = SyncEngine.plan_downloads(store, "on_demand", { shelves = true })
+        assert.are.same({ "by-rev" }, uuids(plan))
+    end)
+end)
+
+-- Shaped like calibre-web's create_kobo_tag: members named by book uuid.
+local function tag(id, name, members)
+    local items = {}
+    for _idx, uuid in ipairs(members or {}) do
+        table.insert(items, { RevisionId = uuid, Type = "ProductRevisionTagItem" })
+    end
+    return { Tag = {
+        Id = id, Name = name, Items = items, Type = "UserTag",
+        Created = "2026-07-25T00:00:00Z", LastModified = "2026-07-25T00:00:00Z",
+    } }
+end
+
+describe("SyncEngine.process_items with tags", function()
+    it("stores a new shelf with its members", function()
+        local store = new_store()
+        SyncEngine.process_items(store, {
+            { NewTag = tag("t1", "To read", { "u1", "u2" }) },
+        }, SyncEngine.new_result())
+        assert.are.same({ name = "To read", books = { "u1", "u2" } }, store:tags()["t1"])
+    end)
+
+    it("replaces the members on a change rather than merging them", function()
+        local store = new_store()
+        SyncEngine.process_items(store, {
+            { NewTag = tag("t1", "To read", { "u1", "u2" }) },
+            { ChangedTag = tag("t1", "Reading", { "u2" }) },
+        }, SyncEngine.new_result())
+        assert.are.same({ name = "Reading", books = { "u2" } }, store:tags()["t1"])
+    end)
+
+    it("drops a deleted shelf", function()
+        local store = new_store()
+        SyncEngine.process_items(store, {
+            { NewTag = tag("t1", "To read", { "u1" }) },
+            { DeletedTag = { Tag = { Id = "t1", LastModified = "2026-07-26T00:00:00Z" } } },
+        }, SyncEngine.new_result())
+        assert.is_nil(store:tags()["t1"])
+    end)
+
+    it("keeps an empty shelf and skips one without a name or id", function()
+        local store = new_store()
+        SyncEngine.process_items(store, {
+            { NewTag = tag("t1", "Empty") },
+            { NewTag = tag("t2", "") },
+            { NewTag = { Tag = { Name = "No id" } } },
+            { NewTag = {} },
+        }, SyncEngine.new_result())
+        assert.are.same({ t1 = { name = "Empty", books = {} } }, store:tags())
+    end)
+
+    it("does not count shelves as book changes", function()
+        local store = new_store()
+        local result = SyncEngine.new_result()
+        SyncEngine.process_items(store, {
+            { NewTag = tag("t1", "To read", { "u1" }) },
         }, result)
         assert.are.equal(0, result.new + result.changed + result.states + result.removed)
     end)

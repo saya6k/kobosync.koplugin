@@ -23,12 +23,16 @@ return {
         "Herunterladen",
     ["Download all %1 books"] =
         "Alle %1 Bücher herunterladen",
+    ["Download books on synced shelves: %1"] =
+        "Bücher aus synchronisierten Regalen herunterladen: %1",
     ["Download folder: %1"] =
         "Download-Ordner: %1",
     ["Downloaded: %1"] =
         "Heruntergeladen: %1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "Lädt jedes Buch der Bibliothek herunter und holt neue, sobald sie erscheinen; bei der ersten Synchronisierung ist das die gesamte Bibliothek. Wenn deaktiviert, aktualisiert die Synchronisierung nur den Katalog, und Bücher werden einzeln über den Server-Bibliotheksbrowser geladen.",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "Lädt die Bücher aus den Regalen herunter, die dein Server synchronisiert, auch wenn der Rest der Bibliothek nur bei Bedarf geladen wird.",
     ["Every %1 minutes"] =
         "Alle %1 Minuten",
     ["Failed downloads: %1"] =
@@ -101,6 +105,8 @@ return {
         "Zuletzt synchronisiert: %1",
     ["Matches book titles and series names."] =
         "Durchsucht Buchtitel und Reihennamen.",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "Überträgt die Regale, die dein Server synchronisiert, in KOReader-Sammlungen; jede enthält die Bücher ihres Regals, die auf diesem Gerät sind. Bücher, die du selbst zu diesen Sammlungen hinzufügst, bleiben unangetastet.",
     ["Missing locally: %1"] =
         "Lokal fehlend: %1",
     ["Not now"] =
@@ -133,6 +139,8 @@ return {
         "Server: %1",
     ["Set server URL"] =
         "Server-URL festlegen",
+    ["Shelves as collections: %1"] =
+        "Regale als Sammlungen: %1",
     ["Show all books"] =
         "Alle Bücher anzeigen",
     ["Show downloaded only"] =

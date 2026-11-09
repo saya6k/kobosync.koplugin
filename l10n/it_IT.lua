@@ -23,12 +23,16 @@ return {
         "Scarica",
     ["Download all %1 books"] =
         "Scarica tutti i %1 libri",
+    ["Download books on synced shelves: %1"] =
+        "Scarica i libri degli scaffali sincronizzati: %1",
     ["Download folder: %1"] =
         "Cartella di download: %1",
     ["Downloaded: %1"] =
         "Scaricati: %1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "Scarica ogni libro della libreria e recupera i nuovi man mano che arrivano; alla prima sincronizzazione significa l'intera libreria. Se disattivato, la sincronizzazione aggiorna solo il catalogo e i libri si scaricano uno alla volta dal browser della libreria del server.",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "Scarica i libri degli scaffali sincronizzati dal server, anche quando il resto della biblioteca viene scaricato su richiesta.",
     ["Every %1 minutes"] =
         "Ogni %1 minuti",
     ["Failed downloads: %1"] =
@@ -101,6 +105,8 @@ return {
         "Ultima sincronizzazione: %1",
     ["Matches book titles and series names."] =
         "Cerca nei titoli dei libri e nei nomi delle serie.",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "Riproduce gli scaffali sincronizzati dal server come raccolte di KOReader, ognuna con i libri del proprio scaffale presenti su questo dispositivo. I libri che aggiungi tu a queste raccolte non vengono toccati.",
     ["Missing locally: %1"] =
         "Mancanti in locale: %1",
     ["Not now"] =
@@ -133,6 +139,8 @@ return {
         "Server: %1",
     ["Set server URL"] =
         "Imposta URL del server",
+    ["Shelves as collections: %1"] =
+        "Scaffali come raccolte: %1",
     ["Show all books"] =
         "Mostra tutti i libri",
     ["Show downloaded only"] =

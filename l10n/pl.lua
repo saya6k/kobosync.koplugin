@@ -23,12 +23,16 @@ return {
         "Pobierz",
     ["Download all %1 books"] =
         "Pobierz wszystkie %1 książek",
+    ["Download books on synced shelves: %1"] =
+        "Pobieraj książki z synchronizowanych półek: %1",
     ["Download folder: %1"] =
         "Folder pobierania: %1",
     ["Downloaded: %1"] =
         "Pobrane: %1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "Pobiera każdą książkę z biblioteki i dociąga nowe, gdy się pojawią; przy pierwszej synchronizacji oznacza to całą bibliotekę. Po wyłączeniu synchronizacja odświeża tylko katalog, a książki pobiera się pojedynczo z przeglądarki biblioteki serwera.",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "Pobiera książki z półek synchronizowanych przez serwer, nawet gdy reszta biblioteki jest pobierana na żądanie.",
     ["Every %1 minutes"] =
         "Co %1 minut",
     ["Failed downloads: %1"] =
@@ -101,6 +105,8 @@ return {
         "Ostatnia synchronizacja: %1",
     ["Matches book titles and series names."] =
         "Szuka w tytułach książek i nazwach serii.",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "Odwzorowuje półki synchronizowane przez serwer jako kolekcje KOReadera, z których każda zawiera książki ze swojej półki obecne na tym urządzeniu. Książki dodane do tych kolekcji samodzielnie pozostają nietknięte.",
     ["Missing locally: %1"] =
         "Brakuje lokalnie: %1",
     ["Not now"] =
@@ -133,6 +139,8 @@ return {
         "Serwer: %1",
     ["Set server URL"] =
         "Ustaw adres URL serwera",
+    ["Shelves as collections: %1"] =
+        "Półki jako kolekcje: %1",
     ["Show all books"] =
         "Pokaż wszystkie książki",
     ["Show downloaded only"] =

@@ -23,12 +23,16 @@ return {
         "Downloaden",
     ["Download all %1 books"] =
         "Alle %1 boeken downloaden",
+    ["Download books on synced shelves: %1"] =
+        "Boeken op gesynchroniseerde planken downloaden: %1",
     ["Download folder: %1"] =
         "Downloadmap: %1",
     ["Downloaded: %1"] =
         "Gedownload: %1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "Downloadt elk boek in de bibliotheek en haalt nieuwe op zodra ze verschijnen; bij een eerste synchronisatie betekent dat de hele bibliotheek. Uitgeschakeld werkt synchronisatie alleen de catalogus bij en worden boeken één voor één opgehaald via de serverbibliotheek.",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "Downloadt de boeken op de planken die je server synchroniseert, ook als de rest van de bibliotheek op aanvraag wordt gedownload.",
     ["Every %1 minutes"] =
         "Elke %1 minuten",
     ["Failed downloads: %1"] =
@@ -101,6 +105,8 @@ return {
         "Laatst gesynchroniseerd: %1",
     ["Matches book titles and series names."] =
         "Zoekt in boektitels en reeksnamen.",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "Neemt de boekenplanken die je server synchroniseert over als KOReader-collecties, elk met de boeken van die plank die op dit apparaat staan. Boeken die je zelf aan die collecties toevoegt, blijven ongemoeid.",
     ["Missing locally: %1"] =
         "Lokaal ontbrekend: %1",
     ["Not now"] =
@@ -133,6 +139,8 @@ return {
         "Server: %1",
     ["Set server URL"] =
         "Server-URL instellen",
+    ["Shelves as collections: %1"] =
+        "Boekenplanken als collecties: %1",
     ["Show all books"] =
         "Alle boeken tonen",
     ["Show downloaded only"] =

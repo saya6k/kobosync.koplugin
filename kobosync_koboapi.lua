@@ -106,6 +106,7 @@ end
 -- processed pages is returned as the third value so progress is not lost).
 function KoboApi:sync(synctoken, on_page)
     local token = synctoken
+    local previous_body
     for page = 1, MAX_SYNC_PAGES do
         local req = {
             url = self.base_url .. "/v1/library/sync",
@@ -119,12 +120,23 @@ function KoboApi:sync(synctoken, on_page)
         if not resp then
             return nil, err, token
         end
+        local next_token = get_header(resp.headers, SYNC_TOKEN_HEADER) or token
+        -- The token it was sent, handed back with the page it answered last
+        -- time: the next request would be this one again, and so would the
+        -- answer. calibre-web does this when only selected shelves sync and
+        -- more than a page of already synced books sit on those shelves --
+        -- it re-sends their reading states with "continue" for good. Nothing
+        -- is left that the server would send, so the walk is complete.
+        if next_token == token and resp.body == previous_body then
+            return token
+        end
+        previous_body = resp.body
         local ok, items = pcall(self.json.decode, resp.body)
         if not ok or type(items) ~= "table" then
             return nil, "invalid JSON in sync response", token
         end
         local go_on = on_page(items, page)
-        token = get_header(resp.headers, SYNC_TOKEN_HEADER) or token
+        token = next_token
         if go_on == false then
             return token
         end
@@ -138,6 +150,31 @@ end
 -- Resource endpoint; carries the cover image URL template among other hosts.
 function KoboApi:get_initialization()
     return self:_request_json("GET", "/v1/initialization")
+end
+
+-- One book's BookMetadata, in the shape a sync item carries it. calibre-web
+-- answers with a one-element list. Goes through sync_request: it is asked once
+-- per book that lacks metadata, which after a server-side reset is dozens.
+-- An HTTP error means the server has no such book (calibre-web redirects to
+-- the Kobo store for those); a transport error is worth trying again.
+function KoboApi:get_metadata(book_uuid)
+    local resp, err = self.sync_request({
+        url = self.base_url .. "/v1/library/" .. book_uuid .. "/metadata",
+        method = "GET",
+        headers = { ["Accept"] = "application/json" },
+    })
+    if not resp then
+        return nil, err or "network error"
+    end
+    if resp.code ~= 200 then
+        return nil, "HTTP " .. tostring(resp.code), true
+    end
+    local ok, decoded = pcall(self.json.decode, resp.body)
+    local bm = ok and type(decoded) == "table" and (decoded[1] or decoded)
+    if type(bm) ~= "table" or not bm.Title then
+        return nil, "invalid metadata response", true
+    end
+    return bm
 end
 
 function KoboApi:get_state(book_uuid)

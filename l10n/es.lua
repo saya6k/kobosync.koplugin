@@ -23,12 +23,16 @@ return {
         "Descargar",
     ["Download all %1 books"] =
         "Descargar los %1 libros",
+    ["Download books on synced shelves: %1"] =
+        "Descargar libros de las estanterías sincronizadas: %1",
     ["Download folder: %1"] =
         "Carpeta de descargas: %1",
     ["Downloaded: %1"] =
         "Descargados: %1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "Descarga todos los libros de la biblioteca y obtiene los nuevos a medida que llegan; en una primera sincronización eso significa la biblioteca entera. Si se desactiva, la sincronización solo actualiza el catálogo y los libros se descargan de uno en uno desde el explorador de la biblioteca del servidor.",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "Descarga los libros de las estanterías que sincroniza tu servidor, aunque el resto de la biblioteca se descargue bajo demanda.",
     ["Every %1 minutes"] =
         "Cada %1 minutos",
     ["Failed downloads: %1"] =
@@ -101,6 +105,8 @@ return {
         "Última sincronización: %1",
     ["Matches book titles and series names."] =
         "Busca en títulos de libros y nombres de series.",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "Refleja las estanterías que sincroniza tu servidor en colecciones de KOReader, cada una con los libros de su estantería que están en este dispositivo. Los libros que añadas tú mismo a esas colecciones no se tocan.",
     ["Missing locally: %1"] =
         "Faltan localmente: %1",
     ["Not now"] =
@@ -133,6 +139,8 @@ return {
         "Servidor: %1",
     ["Set server URL"] =
         "Configurar URL del servidor",
+    ["Shelves as collections: %1"] =
+        "Estanterías como colecciones: %1",
     ["Show all books"] =
         "Mostrar todos los libros",
     ["Show downloaded only"] =

@@ -23,12 +23,16 @@ return {
         "다운로드",
     ["Download all %1 books"] =
         "%1권 전체 내려받기",
+    ["Download books on synced shelves: %1"] =
+        "동기화된 책장의 책 다운로드: %1",
     ["Download folder: %1"] =
         "다운로드 폴더: %1",
     ["Downloaded: %1"] =
         "다운로드함: %1",
     ["Downloads every book in the library and fetches new ones as they arrive; on a first sync that means the whole library. When disabled, syncing only updates the catalog and books are downloaded one at a time from the server library browser."] =
         "라이브러리의 모든 책을 내려받고 새 책이 추가될 때마다 계속 가져옵니다. 첫 동기화에서는 서재 전체가 대상입니다. 끄면 동기화는 목록만 갱신하고, 책은 서버 라이브러리 탐색 화면에서 한 권씩 내려받습니다.",
+    ["Downloads the books on the shelves your server syncs, even when the rest of the library is downloaded on demand."] =
+        "서버가 동기화하는 책장의 책을 다운로드합니다. 나머지 서재가 필요할 때만 다운로드되는 경우에도 마찬가지입니다.",
     ["Every %1 minutes"] =
         "%1분마다",
     ["Failed downloads: %1"] =
@@ -101,6 +105,8 @@ return {
         "마지막 동기화: %1",
     ["Matches book titles and series names."] =
         "책 제목과 시리즈 이름에서 찾습니다.",
+    ["Mirrors the shelves your server syncs into KOReader collections, each holding the books from its shelf that are on this device. Books you add to those collections yourself are left alone."] =
+        "서버가 동기화하는 책장을 KOReader 컬렉션으로 옮겨 오며, 각 컬렉션에는 해당 책장의 책 중 이 기기에 있는 책이 들어갑니다. 직접 컬렉션에 추가한 책은 그대로 둡니다.",
     ["Missing locally: %1"] =
         "기기에 없음: %1",
     ["Not now"] =
@@ -133,6 +139,8 @@ return {
         "서버: %1",
     ["Set server URL"] =
         "서버 주소 설정",
+    ["Shelves as collections: %1"] =
+        "책장을 컬렉션으로: %1",
     ["Show all books"] =
         "모든 책 보기",
     ["Show downloaded only"] =
